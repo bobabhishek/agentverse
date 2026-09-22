@@ -1,39 +1,41 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Shield, 
-  ShieldAlert, 
   Database, 
   Send, 
   Plus, 
   User, 
   Bot, 
-  AlertTriangle, 
   Trash2, 
   MessageSquare, 
   Pencil, 
-  Check,
-  Terminal,
-  Zap,
-  Info,
-  FileText,
-  Download,
+  Check, 
+  Sparkles,
   ArrowRight,
-  ArrowLeft
+  Activity,
+  ChevronRight,
+  X,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import syntheticData from '@/data/synthetic-customers.json';
 
 type LogType = {
   id: string;
-  role: 'user' | 'agent1' | 'agent2';
+  role: 'user' | 'assistant';
   content: string;
   timestamp: string;
-  type?: 'info' | 'warning' | 'error' | 'success';
-  customerData?: any;
+};
+
+type ActivityStep = {
+  node: string;
+  title: string;
+  description: string;
+  badge: string;
+  color: 'blue' | 'purple' | 'emerald';
 };
 
 type ChatSession = {
@@ -51,22 +53,63 @@ export default function Home() {
   const [inputText, setInputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeNode, setActiveNode] = useState<'idle' | 'agent1' | 'agent2'>('idle');
-  const [lastContext, setLastContext] = useState<any>(null);
+  const [flowStage, setFlowStage] = useState<'idle' | 'requesting' | 'processing' | 'received' | 'completed'>('idle');
+  const [isActivityOpen, setIsActivityOpen] = useState(true);
   const chatScrollRef = useRef<HTMLDivElement>(null);
-  const auditScrollRef = useRef<HTMLDivElement>(null);
 
   // Renaming state
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
 
-  // Quick prompt presets
+  // Agent 1 Accuracy metric state (single source of truth: backend /api/agent-accuracy)
+  const [agent1Accuracy, setAgent1Accuracy] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/agent-accuracy')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.accuracy) {
+          setAgent1Accuracy(data.accuracy);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch Agent 1 accuracy:', err);
+      });
+  }, []);
+
+  // Quick prompt presets (clean, conversational queries)
   const quickPrompts = [
-    "I need Emma Evans phone number",
-    "Get details for Hans Russo",
-    "Show all customers in Amsterdam",
-    "Show cancelled orders",
-    "What is the GPS of id SYN-CUST-1003?",
-    "Find customer John Doe"
+    "Give me the phone number for customer 1006.",
+    "Give me customer names and order status.",
+    "Show me the names of all customers.",
+    "Show me the current status of customer 1006.",
+    "Give me the address of customer 1006.",
+    "Get details for Hans Russo"
+  ];
+
+  // 3-step minimal A2A activity trail
+  const activitySteps: ActivityStep[] = [
+    {
+      node: "Agent 2 • India Node",
+      title: "Request Sent",
+      description: "User prompt formulated and routed across borders to Europe.",
+      badge: "Step 1",
+      color: "blue"
+    },
+    {
+      node: "Agent 1 • Europe Node",
+      title: "Request Processed",
+      description: "Isolated synthetic customer records queried securely.",
+      badge: "Step 2",
+      color: "purple"
+    },
+    {
+      node: "Agent 2 • India Node",
+      title: "Response Received",
+      description: "Cross-border customer payload delivered and response rendered.",
+      badge: "Step 3",
+      color: "emerald"
+    }
   ];
 
   // Load sessions from local storage on mount
@@ -95,13 +138,10 @@ export default function Home() {
 
   const currentLogs = sessions.find(s => s.id === currentSessionId)?.logs || [];
 
-  // Auto-scroll to bottom of chat and audit trail
+  // Auto-scroll to bottom of chat
   useEffect(() => {
     if (chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-    }
-    if (auditScrollRef.current) {
-      auditScrollRef.current.scrollTop = auditScrollRef.current.scrollHeight;
     }
   }, [currentLogs, isProcessing]);
 
@@ -109,7 +149,42 @@ export default function Home() {
 
   const formatTime = () => {
     const d = new Date();
-    return d.toTimeString().split(' ')[0]; // HH:MM:SS
+    return d.toTimeString().split(' ')[0].slice(0, 5); // HH:MM
+  };
+
+  const createNewSession = (initialQuery?: string) => {
+    const newId = Math.random().toString(36).substring(7);
+    const newSession: ChatSession = {
+      id: newId,
+      title: initialQuery ? (initialQuery.length > 25 ? initialQuery.substring(0, 25) + '...' : initialQuery) : 'New Conversation',
+      logs: [],
+      timestamp: Date.now(),
+    };
+    setSessions(prev => [newSession, ...prev]);
+    setCurrentSessionId(newId);
+    return newId;
+  };
+
+  const deleteSession = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setSessions(prev => prev.filter(s => s.id !== id));
+    if (currentSessionId === id) {
+      const remaining = sessions.filter(s => s.id !== id);
+      setCurrentSessionId(remaining.length > 0 ? remaining[0].id : null);
+    }
+  };
+
+  const startEditing = (e: React.MouseEvent, session: ChatSession) => {
+    e.stopPropagation();
+    setEditingSessionId(session.id);
+    setEditTitle(session.title);
+  };
+
+  const saveEdit = (e?: React.SyntheticEvent) => {
+    e?.stopPropagation();
+    if (!editTitle.trim()) return;
+    setSessions(prev => prev.map(s => s.id === editingSessionId ? { ...s, title: editTitle.trim() } : s));
+    setEditingSessionId(null);
   };
 
   const executeSimulation = async (queryText: string) => {
@@ -120,399 +195,93 @@ export default function Home() {
     setIsProcessing(true);
 
     let activeSessionId = currentSessionId;
-    
-    // If no active session, create one
     if (!activeSessionId) {
-      activeSessionId = Math.random().toString(36).substring(7);
-      const newSession: ChatSession = {
-        id: activeSessionId,
-        title: userQuery.length > 25 ? userQuery.substring(0, 25) + '...' : userQuery,
-        logs: [],
-        timestamp: Date.now(),
-      };
-      setSessions(prev => [newSession, ...prev]);
-      setCurrentSessionId(activeSessionId);
+      activeSessionId = createNewSession(userQuery);
     }
 
-    const addLog = (log: Omit<LogType, 'id' | 'timestamp'>) => {
-      const newLog: LogType = { 
-        ...log, 
-        id: Math.random().toString(36).substring(7), 
-        timestamp: formatTime() 
+    // Add user message to conversation
+    const userMsg: LogType = {
+      id: Math.random().toString(36).substring(7),
+      role: 'user',
+      content: userQuery,
+      timestamp: formatTime()
+    };
+
+    setSessions(prev => prev.map(s => {
+      if (s.id === activeSessionId) {
+        const isFirst = s.logs.length === 0;
+        return {
+          ...s,
+          title: isFirst ? (userQuery.length > 25 ? userQuery.substring(0, 25) + '...' : userQuery) : s.title,
+          logs: [...s.logs, userMsg]
+        };
+      }
+      return s;
+    }));
+
+    // Step 1: Agent 2 sends request to Europe
+    setActiveNode('agent2');
+    setFlowStage('requesting');
+    await sleep(650);
+
+    try {
+      // Step 2: Agent 1 processes request in Europe
+      setActiveNode('agent1');
+      setFlowStage('processing');
+      const response = await fetch(`http://localhost:8000/api/simulations/${activeSessionId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userQuery })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      await sleep(500);
+
+      // Step 3: Agent 2 receives response
+      setActiveNode('agent2');
+      setFlowStage('received');
+      await sleep(550);
+
+      // Determine the conversational reply text
+      const renderedEvent = data.events?.find((e: any) => e.event_type === 'RESPONSE_RENDERED');
+      const conversationalReply = data.response?.reply || renderedEvent?.metadata?.customerData?.reply || renderedEvent?.action_description || 'I have retrieved the requested information from the European node.';
+
+      const assistantMsg: LogType = {
+        id: Math.random().toString(36).substring(7),
+        role: 'assistant',
+        content: conversationalReply,
+        timestamp: formatTime()
       };
+
       setSessions(prev => prev.map(s => {
         if (s.id === activeSessionId) {
-          return { ...s, logs: [...s.logs, newLog] };
+          return { ...s, logs: [...s.logs, assistantMsg] };
         }
         return s;
       }));
-    };
 
-    // 1. Log USER input event
-    addLog({ 
-      role: 'user', 
-      content: `Prompt received by Agent 2 (India): "${userQuery}"`, 
-      type: 'info' 
-    });
-    
-    await sleep(500);
-
-    const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    const queryLower = userQuery.toLowerCase().trim();
-    const normalizedQuery = normalize(userQuery);
-
-    // 1. Greetings check
-    const greetings = ['hi', 'hello', 'hey', 'greetings', 'good morning', 'good evening', 'sup', 'howdy'];
-    if (greetings.includes(queryLower)) {
-      addLog({ 
-        role: 'agent2', 
-        content: "Hello! I am Agent 2 (India Node). How can I assist you with European customer data today?", 
-        type: 'info' 
-      });
-      setIsProcessing(false);
-      return;
-    }
-
-    // 2. Thank you / Polite closing check
-    const thankYouPhrases = ['thanks', 'thank you', 'thx', 'cheers', 'awesome', 'great thanks', 'thank u', 'thanks agent', 'ok thanks', 'okay thanks'];
-    if (thankYouPhrases.some(phrase => queryLower.includes(phrase))) {
-      addLog({ 
-        role: 'agent2', 
-        content: "You're welcome! Let me know if you need any more European customer records or telemetry checks.", 
-        type: 'info' 
-      });
-      setIsProcessing(false);
-      return;
-    }
-
-    // 3. Frustration / Error report check
-    if (queryLower.includes('wrong') || queryLower.includes('doesnt match') || queryLower.includes('doesn\'t match') || 
-        queryLower.includes('mistake') || queryLower.includes('stupid') || queryLower.includes('fix this') || queryLower.includes('wtf')) {
-      addLog({ 
-        role: 'agent2', 
-        content: "Apologies for the issue! Please specify an exact customer ID (e.g. SYN-CUST-1003), customer name, city, country, or status, and I will fetch the data from Agent 1.", 
-        type: 'info' 
-      });
-      setIsProcessing(false);
-      return;
-    }
-
-    // Intent & Attribute extraction
-    const wantsPhone = queryLower.includes('phone');
-    const wantsAddress = queryLower.includes('address') || queryLower.includes('location');
-    const wantsGps = queryLower.includes('gps') || queryLower.includes('coordinates');
-    const wantsStatus = queryLower.includes('status') || queryLower.includes('order');
-
-    // Asking for details / profile
-    const isAskingForDetails = queryLower.includes('detail') || queryLower.includes('all') || queryLower.includes('everything') || queryLower.includes('profile') || queryLower.includes('info');
-    
-    // wantsId is ONLY true if user asks specifically for ID (e.g. "what is the id of Hans") and NOT asking for details/everything
-    const wantsId = (queryLower.includes('customer id') || queryLower.includes('what is the id') || queryLower === 'id') && !isAskingForDetails;
-
-    // Fetch all if details requested, or if no specific single attribute filter requested
-    const fetchAll = isAskingForDetails || (!wantsPhone && !wantsAddress && !wantsGps && !wantsId && !wantsStatus);
-
-    // Check if an unavailable field (security number, dob, ssn, passport, etc.) was asked
-    const checkUnavailableField = () => {
-      if (queryLower.includes('security')) return 'Security Number';
-      if (queryLower.includes('ssn')) return 'SSN';
-      if (queryLower.includes('dob') || queryLower.includes('date of birth')) return 'Date of Birth';
-      if (queryLower.includes('salary')) return 'Salary';
-      if (queryLower.includes('passport')) return 'Passport Number';
-      if (queryLower.includes('credit card')) return 'Credit Card';
-      return null;
-    };
-    const unavailableField = checkUnavailableField();
-
-    // Check if query is a follow-up referencing previous context (e.g. "that id", "additional details", "her address")
-    const isFollowUp = queryLower.includes('her ') || 
-                      queryLower.includes('his ') || 
-                      queryLower.includes('their ') || 
-                      queryLower.includes('that id') || 
-                      queryLower.includes('that customer') || 
-                      queryLower.includes('this customer') || 
-                      queryLower.includes('that record') || 
-                      queryLower.includes('additional detail') || 
-                      queryLower.includes('more detail') || 
-                      queryLower === 'details' || 
-                      queryLower === 'more details' || 
-                      queryLower === 'all details' || 
-                      queryLower === 'address' || 
-                      queryLower === 'gps' || 
-                      queryLower === 'phone';
-
-    // 4. Search for Single Customer Match in syntheticData
-    let targetCustomer: any = null;
-
-    // Check exact ID match like SYN-CUST-1003 or 1003
-    const idMatch = queryLower.match(/syn-cust-\d{4}/i);
-    if (idMatch) {
-      const fullId = idMatch[0].toUpperCase();
-      targetCustomer = syntheticData.find(c => c.id.toUpperCase() === fullId);
-    }
-
-    if (!targetCustomer) {
-      const numMatch = queryLower.match(/\b1\d{3}\b/);
-      if (numMatch) {
-        const targetId = `SYN-CUST-${numMatch[0]}`;
-        targetCustomer = syntheticData.find(c => c.id.toUpperCase() === targetId);
-      }
-    }
-
-    // Check full name match in synthetic database
-    if (!targetCustomer) {
-      targetCustomer = syntheticData.find(c => {
-        const normName = normalize(c.name);
-        return normalizedQuery.includes(normName);
-      });
-    }
-
-    // Follow-up context fallback ONLY if query is a follow-up and no new specific name/ID was found
-    if (!targetCustomer && isFollowUp && lastContext && lastContext.type === 'single') {
-      targetCustomer = lastContext.customer;
-    }
-
-    // 5. Check ID Range match (e.g. SYN-CUST-1001 to SYN-CUST-1010 or 1001 to 1005)
-    let rangeGroup: any[] = [];
-    let rangeLabel = "";
-    const rangeMatch = queryLower.match(/(?:syn-cust-)?(\d{4})\s*(?:to|-|through)\s*(?:syn-cust-)?(\d{4})/i);
-    if (rangeMatch && !targetCustomer) {
-      const startNum = parseInt(rangeMatch[1], 10);
-      const endNum = parseInt(rangeMatch[2], 10);
-      if (!isNaN(startNum) && !isNaN(endNum)) {
-        const min = Math.min(startNum, endNum);
-        const max = Math.max(startNum, endNum);
-        rangeGroup = syntheticData.filter(c => {
-          const num = parseInt(c.id.replace("SYN-CUST-", ""), 10);
-          return num >= min && num <= max;
-        });
-        if (rangeGroup.length > 0) {
-          rangeLabel = `range SYN-CUST-${min} to SYN-CUST-${max}`;
+    } catch (error: any) {
+      const errorMsg: LogType = {
+        id: Math.random().toString(36).substring(7),
+        role: 'assistant',
+        content: `I couldn't reach the Europe node. Please make sure the backend server is running on port 8000.`,
+        timestamp: formatTime()
+      };
+      setSessions(prev => prev.map(s => {
+        if (s.id === activeSessionId) {
+          return { ...s, logs: [...s.logs, errorMsg] };
         }
-      }
-    }
-
-    // 6. Group matches by Country, City, or Status
-    if (!targetCustomer && rangeGroup.length === 0) {
-      const allCountries = Array.from(new Set(syntheticData.map(c => normalize(c.country))));
-      const allCities = Array.from(new Set(syntheticData.map(c => normalize(c.city))));
-      const allStatuses = Array.from(new Set(syntheticData.map(c => normalize(c.order_status))));
-
-      let matchedGroup: any[] = [];
-      let groupCategory = "";
-      let groupValue = "";
-
-      for (const c of allCountries) {
-        if (normalizedQuery.includes(c)) {
-          matchedGroup = syntheticData.filter(cust => normalize(cust.country) === c);
-          groupCategory = "country";
-          groupValue = syntheticData.find(cust => normalize(cust.country) === c)?.country || c;
-          break;
-        }
-      }
-
-      if (matchedGroup.length === 0) {
-        for (const c of allCities) {
-          if (normalizedQuery.includes(c)) {
-            matchedGroup = syntheticData.filter(cust => normalize(cust.city) === c);
-            groupCategory = "city";
-            groupValue = syntheticData.find(cust => normalize(cust.city) === c)?.city || c;
-            break;
-          }
-        }
-      }
-
-      if (matchedGroup.length === 0) {
-        for (const c of allStatuses) {
-          if (normalizedQuery.includes(c)) {
-            matchedGroup = syntheticData.filter(cust => normalize(cust.order_status) === c);
-            groupCategory = "order status";
-            groupValue = syntheticData.find(cust => normalize(cust.order_status) === c)?.order_status || c;
-            break;
-          }
-        }
-      }
-
-      if (matchedGroup.length > 0) {
-        rangeGroup = matchedGroup;
-        rangeLabel = `${groupCategory} ${groupValue}`;
-      }
-    }
-
-    // Handle Bulk / Range Results
-    if (rangeGroup.length > 0 && !targetCustomer) {
-      setLastContext({ type: 'bulk', matchedGroup: rangeGroup, groupCategory: "selection", groupValue: rangeLabel });
-      
-      setActiveNode('agent2');
-      addLog({
-        role: 'agent2',
-        content: `[No Direct DB Access] Received user request: "${userQuery}". Agent 2 sending A2A request to Agent 1 (Europe Node)...`,
-        type: 'info',
-      });
-      await sleep(1500);
-      
-      setActiveNode('agent1');
-      addLog({
-        role: 'agent1',
-        content: `[EU DB Read] Agent 1 queried local database for ${rangeLabel} (${rangeGroup.length} records). Transmitting raw sensitive data to Agent 2 (India)...`,
-        type: 'warning',
-      });
-      await sleep(1200);
-
-      setActiveNode('agent2');
-      addLog({
-        role: 'agent2',
-        content: `Agent 2 received response from Agent 1 and rendered it to the user.`,
-        type: 'info',
-        customerData: {
-          isBulk: true,
-          groupCategory: "selection",
-          groupValue: rangeLabel,
-          records: rangeGroup
-        }
-      });
-      
-      await sleep(400);
+        return s;
+      }));
+    } finally {
       setActiveNode('idle');
+      setFlowStage('completed');
       setIsProcessing(false);
-      return;
     }
-
-    // Handle Unmatched Query (Clean target extraction)
-    if (!targetCustomer) {
-      setActiveNode('agent2');
-      addLog({
-        role: 'agent2',
-        content: `[No Direct DB Access] Received user request: "${userQuery}". Agent 2 sending A2A request to Agent 1 (Europe Node)...`,
-        type: 'info',
-      });
-      await sleep(1200);
-
-      setActiveNode('agent1');
-      addLog({
-        role: 'agent1',
-        content: `[EU DB Read] Agent 1 queried local database. 0 records found for query "${userQuery}".`,
-        type: 'warning',
-      });
-      await sleep(1000);
-
-      // Clean extraction of query subject (e.g. "what about id 4nm21ai072" -> "4nm21ai072")
-      const cleanTarget = userQuery.replace(/what about id:?/i, '').replace(/what about/i, '').replace(/id:?/i, '').trim() || userQuery;
-
-      setActiveNode('agent2');
-      addLog({ 
-        role: 'agent2', 
-        content: `No customer record matching '${cleanTarget}' was found in the European database.`, 
-        type: 'error' 
-      });
-      setActiveNode('idle');
-      setIsProcessing(false);
-      return;
-    }
-
-    // Handle Unavailable Field requested for an existing customer
-    if (unavailableField && !wantsPhone && !wantsAddress && !wantsGps && !wantsId && !wantsStatus && !isAskingForDetails) {
-      setActiveNode('agent2');
-      addLog({
-        role: 'agent2',
-        content: `[No Direct DB Access] Received user request: "${userQuery}". Agent 2 sending A2A request to Agent 1 (Europe Node)...`,
-        type: 'info',
-      });
-      await sleep(1200);
-
-      setActiveNode('agent1');
-      addLog({
-        role: 'agent1',
-        content: `[EU DB Read] Agent 1 queried local database for ${targetCustomer.name} (${targetCustomer.id}). Field '${unavailableField}' is not stored in the database.`,
-        type: 'warning',
-      });
-      await sleep(1000);
-
-      setActiveNode('agent2');
-      addLog({ 
-        role: 'agent2', 
-        content: `Requested field '${unavailableField}' is not available for ${targetCustomer.name} (${targetCustomer.id}) in the European database.\nAvailable fields: ID, Name, Country, City, Address, Phone, GPS, Order Status.`, 
-        type: 'error' 
-      });
-      setActiveNode('idle');
-      setIsProcessing(false);
-      return;
-    }
-
-    // Handle Single Customer Matched Result
-    setLastContext({ type: 'single', customer: targetCustomer });
-
-    setActiveNode('agent2');
-    addLog({
-      role: 'agent2',
-      content: `[No Direct DB Access] Received user request: "${userQuery}". Agent 2 sending A2A request to Agent 1 (Europe Node)...`,
-      type: 'info',
-    });
-
-    await sleep(1500);
-
-    setActiveNode('agent1');
-    const requestedFields = [];
-    if (wantsPhone) requestedFields.push('phone');
-    if (wantsAddress) requestedFields.push('address');
-    if (wantsGps) requestedFields.push('gps');
-    if (wantsStatus) requestedFields.push('order status');
-    if (wantsId) requestedFields.push('id');
-    const fieldsLabel = (fetchAll || requestedFields.length === 0) ? '[full profile]' : `[${requestedFields.join(', ')}]`;
-
-    addLog({
-      role: 'agent1',
-      content: `[EU DB Read] Agent 1 queried local database for ${targetCustomer.name} (${targetCustomer.id}). Transmitting raw sensitive data ${fieldsLabel} to Agent 2 (India)...`,
-      type: 'warning',
-    });
-
-    await sleep(1200);
-
-    setActiveNode('agent2');
-    addLog({
-      role: 'agent2',
-      content: `Agent 2 received response from Agent 1 and rendered it to the user.`,
-      type: 'info',
-      customerData: {
-        isBulk: false,
-        customer: targetCustomer,
-        wantsPhone,
-        wantsAddress,
-        wantsGps,
-        wantsStatus,
-        wantsId,
-        fetchAll
-      }
-    });
-
-    await sleep(400);
-    setActiveNode('idle');
-    setIsProcessing(false);
-  };
-
-  const downloadAuditTrailJSON = () => {
-    if (currentLogs.length === 0) return;
-
-    const formattedExport = currentLogs.map(log => ({
-      event_id: log.id,
-      timestamp: log.timestamp,
-      role: log.role,
-      node: log.role === 'agent2' ? 'Agent 2 (India)' : log.role === 'agent1' ? 'Agent 1 (Europe)' : 'User',
-      event_type: log.type ? log.type.toUpperCase() : 'INFO',
-      message: log.content,
-      payload: log.customerData || null
-    }));
-
-    const jsonString = JSON.stringify(formattedExport, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `audit-trail-${currentSessionId || 'session'}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -520,421 +289,398 @@ export default function Home() {
     executeSimulation(inputText);
   };
 
-  const deleteSession = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setSessions(prev => prev.filter(s => s.id !== id));
-    if (currentSessionId === id) {
-      setCurrentSessionId(null);
-    }
-  };
-
-  const startEditing = (e: React.MouseEvent, session: ChatSession) => {
-    e.stopPropagation();
-    setEditingSessionId(session.id);
-    setEditTitle(session.title);
-  };
-
-  const saveEdit = (e?: React.FormEvent | React.FocusEvent | React.MouseEvent) => {
-    if (e && 'stopPropagation' in e) e.stopPropagation();
-    if (e && 'preventDefault' in e) e.preventDefault();
-    if (editTitle.trim() && editingSessionId) {
-      setSessions(prev => prev.map(s => s.id === editingSessionId ? { ...s, title: editTitle.trim() } : s));
-    }
-    setEditingSessionId(null);
-  };
-
-  const startNewChat = () => {
-    setCurrentSessionId(null);
-    setActiveNode('idle');
-    setIsProcessing(false);
-    setLastContext(null);
-  };
-
-  // Metrics computation
-  const totalMsgs = currentLogs.filter(l => l.role === 'user' || l.role === 'agent2').length;
-  const totalEvents = currentLogs.length;
-  const totalHops = currentLogs.filter(l => l.role === 'agent1' || l.role === 'agent2').length;
-
   if (!isMounted) return null;
 
   return (
-    <div className="h-screen w-full flex bg-[#030712] text-slate-200 font-sans overflow-hidden selection:bg-emerald-500/30">
+    <div className="flex h-screen bg-[#070c1a] text-slate-100 antialiased font-sans overflow-hidden">
       
-      {/* 1. Left Navigation Sidebar */}
-      <aside className="w-64 shrink-0 h-full border-r border-slate-800/80 bg-[#070c18] flex flex-col p-4">
+      {/* 1. Left Sidebar: Sessions Navigation */}
+      <aside className="w-64 bg-[#090f22] border-r border-slate-800/80 flex flex-col p-4 shrink-0 select-none">
         
-        {/* Brand Header */}
-        <div className="flex items-center gap-3 mb-6 px-1">
-          <div className="w-9 h-9 rounded-xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-sm">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="font-semibold text-slate-100 text-sm tracking-tight">A2A Guard</h1>
-            <p className="text-[10px] font-mono text-slate-500 tracking-wider uppercase font-semibold">SOVEREIGNTY MONITOR</p>
+        {/* Brand & New Chat */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <h1 className="font-semibold text-sm text-slate-100 tracking-tight">AgentVerse</h1>
+            </div>
           </div>
         </div>
 
-        {/* New Simulation Button */}
         <Button 
-          onClick={startNewChat}
-          className="w-full justify-start gap-2 bg-[#0b1325] hover:bg-[#121c33] text-slate-200 border border-slate-800 text-xs font-medium py-2.5 mb-6 rounded-lg shadow-sm"
+          onClick={() => createNewSession()}
+          className="w-full bg-[#0d162e] hover:bg-blue-600/20 text-blue-300 hover:text-blue-200 border border-blue-500/30 text-xs font-medium py-2 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all mb-4"
         >
-          <Plus className="w-4 h-4 text-slate-400" />
-          New simulation
+          <Plus className="w-3.5 h-3.5 text-blue-400" />
+          <span>New Chat</span>
         </Button>
 
-        {/* Sessions Section */}
-        <div className="flex-1 flex flex-col min-h-0">
-          <h2 className="text-[10px] font-mono text-slate-500 font-semibold uppercase tracking-wider mb-2 px-1">
-            SESSIONS
-          </h2>
-          <div className="flex-1 overflow-y-auto space-y-1 pr-1">
-            {sessions.length === 0 ? (
-              <div className="text-xs text-slate-600 font-mono px-1 py-2">
-                No active sessions.
-              </div>
-            ) : (
-              sessions.map((session) => (
-                <div
-                  key={session.id}
-                  onClick={() => !isProcessing && setCurrentSessionId(session.id)}
-                  className={`group flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer text-xs transition-colors border ${
-                    currentSessionId === session.id
-                      ? 'bg-[#11192e] text-slate-100 border-slate-700/80'
-                      : 'text-slate-400 hover:bg-[#0b1325] hover:text-slate-300 border-transparent'
-                  }`}
-                >
-                  {editingSessionId === session.id ? (
-                    <div className="flex items-center w-full gap-1">
-                      <Input
-                        autoFocus
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && saveEdit(e)}
-                        onBlur={(e) => saveEdit(e)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="h-6 text-xs px-1.5 bg-slate-900 border-slate-700 focus-visible:ring-emerald-500/50 text-slate-200"
-                      />
-                      <button onClick={(e) => saveEdit(e)} className="p-1 hover:text-emerald-400">
-                        <Check className="w-3 h-3" />
+        {/* Sessions List */}
+        <div className="flex-1 overflow-y-auto pr-1 space-y-1">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 px-2 py-1 font-semibold">
+            Conversations
+          </div>
+          {sessions.length === 0 ? (
+            <div className="text-xs text-slate-500 px-2 py-3 text-center italic">
+              No conversations yet
+            </div>
+          ) : (
+            sessions.map((session) => (
+              <div 
+                key={session.id}
+                onClick={() => setCurrentSessionId(session.id)}
+                className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer transition-all border ${
+                  session.id === currentSessionId 
+                    ? 'bg-[#121c38] text-blue-300 border-blue-500/40 shadow-sm' 
+                    : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200 border-transparent'
+                }`}
+              >
+                {editingSessionId === session.id ? (
+                  <div className="flex items-center gap-1.5 w-full">
+                    <Input
+                      autoFocus
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && saveEdit(e)}
+                      onBlur={(e) => saveEdit(e)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-6 text-xs px-1.5 bg-slate-900 border-slate-700 text-slate-200"
+                    />
+                    <button onClick={(e) => saveEdit(e)} className="p-1 hover:text-emerald-400">
+                      <Check className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 truncate">
+                      <MessageSquare className="w-3.5 h-3.5 shrink-0 text-slate-500 group-hover:text-blue-400 transition-colors" />
+                      <span className="truncate">{session.title}</span>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => startEditing(e, session)}
+                        className="p-1 text-slate-500 hover:text-blue-400"
+                        title="Rename"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={(e) => deleteSession(e, session.id)}
+                        className="p-1 text-slate-500 hover:text-red-400"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 truncate">
-                        <MessageSquare className="w-3.5 h-3.5 shrink-0 text-slate-500" />
-                        <span className="truncate">{session.title}</span>
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => startEditing(e, session)}
-                          className="p-1 text-slate-500 hover:text-emerald-400"
-                          title="Rename"
-                        >
-                          <Pencil className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={(e) => deleteSession(e, session.id)}
-                          className="p-1 text-slate-500 hover:text-red-400"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
+                  </>
+                )}
+              </div>
+            ))
+          )}
         </div>
 
         {/* Sidebar Footer */}
-        <div className="pt-3 border-t border-slate-800/80 mt-auto text-[11px] font-mono text-slate-500 leading-tight space-y-0.5">
-          <p>Synthetic dataset • {syntheticData.length} EU profiles</p>
-          <p>Stored locally in this browser</p>
+        <div className="pt-3 border-t border-slate-800/80 mt-auto text-[11px] text-slate-500 leading-tight space-y-1">
+          <div className="flex items-center gap-1.5 text-slate-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>Azure OpenAI Connected</span>
+          </div>
+          <p className="font-mono text-[10px] text-slate-600">GPT-4o &bull; GPT-5.4-mini</p>
         </div>
       </aside>
 
       {/* 2. Main Work Area */}
-      <main className="flex-1 flex flex-col min-w-0 h-full p-6 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 h-full p-5 overflow-hidden">
         
         {/* Top Header Bar */}
-        <header className="flex items-center justify-between mb-5 shrink-0">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-100 tracking-tight">A2A Simulation</h2>
+        <header className="flex items-center justify-between mb-4 shrink-0 pb-3 border-b border-slate-800/70">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-lg font-bold tracking-tight flex items-center gap-2.5 text-slate-100">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"></span>
+              </span>
+              <span className="bg-gradient-to-r from-blue-400 via-indigo-200 to-sky-300 bg-clip-text text-transparent tracking-wide">
+                A2A Active
+              </span>
+            </h1>
           </div>
+          
           <div className="flex items-center gap-2">
-            <div className="bg-[#0b1325] border border-slate-800 px-3 py-1.5 rounded-lg text-xs font-mono text-slate-300 flex items-center gap-1.5 shadow-sm">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>{totalMsgs} msgs</span>
-              <span className="text-slate-600">•</span>
-              <span>{totalEvents} events</span>
-            </div>
+            <Link
+              href="/docs"
+              className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0a1126] text-xs font-medium text-slate-300 hover:text-blue-300 hover:border-blue-700/60 hover:bg-blue-950/40 transition-all shadow-sm"
+              title="View GDPR Cross-Border A2A Documentation"
+            >
+              <FileText className="w-3.5 h-3.5 text-blue-400" />
+              <span>Test Case Docs</span>
+            </Link>
+
+            <Button
+              onClick={() => setIsActivityOpen(!isActivityOpen)}
+              variant="outline"
+              size="sm"
+              className={`h-8 border text-xs gap-1.5 rounded-lg transition-all ${
+                isActivityOpen 
+                  ? 'bg-blue-950/60 text-blue-300 border-blue-700/60' 
+                  : 'bg-[#0a1126] text-slate-300 border-slate-800 hover:bg-slate-800/60'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5 text-blue-400" />
+              <span>A2A Flow</span>
+              <Badge className="bg-blue-900/60 text-blue-300 text-[9px] px-1 py-0 ml-0.5">
+                3 Hops
+              </Badge>
+            </Button>
           </div>
         </header>
 
-        {/* Top Section: A2A Telemetry Channel */}
-        <section className="bg-[#070c18] border border-slate-800/90 rounded-xl p-5 mb-5 shrink-0 shadow-sm relative overflow-hidden">
-          
-          {/* Channel Header Bar */}
-          <div className="flex items-center justify-end mb-3 font-mono text-xs">
-            {activeNode !== 'idle' ? (
-              <span className="text-amber-400 flex items-center gap-1.5 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping inline-block" />
-                REQUEST IN FLIGHT
-              </span>
-            ) : (
-              <span className="text-slate-500 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-slate-600 inline-block" />
-                CHANNEL IDLE
-              </span>
-            )}
-          </div>
-
-          {/* Telemetry Canvas Grid */}
-          <div className="bg-telemetry-grid bg-[#0a0f1d] border border-slate-800/80 rounded-xl p-6 flex items-center justify-between relative">
+        {/* Top Section: Agent Nodes Communication Banner */}
+        <section className="bg-gradient-to-r from-[#060c1d] via-[#091128] to-[#0e0a22] border border-slate-800/80 rounded-2xl p-3 sm:p-3.5 mb-4 shrink-0 shadow-md">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-3 sm:gap-4 w-full">
             
             {/* Left Node: Agent 2 (India) */}
-            <div className={`w-64 bg-[#070c18] border transition-all duration-300 rounded-xl p-4 relative ${
-              activeNode === 'agent2' ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-slate-800'
+            <div className={`flex items-center gap-3 bg-[#060b18] border transition-all duration-300 rounded-xl px-3.5 py-2.5 w-full lg:w-auto min-w-[225px] ${
+              flowStage === 'requesting' || flowStage === 'received' 
+                ? 'border-blue-500 shadow-[0_0_18px_rgba(59,130,246,0.3)] bg-blue-950/30' 
+                : 'border-slate-800 hover:border-slate-700'
             }`}>
-              <div className="flex justify-between items-start mb-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-950/80 border border-amber-800 flex items-center justify-center text-amber-400">
-                  <ShieldAlert className="w-4 h-4" />
-                </div>
-                <Badge className="bg-amber-950 text-amber-400 border border-amber-800 text-[10px] font-mono px-2 py-0.5 font-bold">
-                  IN
-                </Badge>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                flowStage === 'requesting' || flowStage === 'received'
+                  ? 'bg-blue-600/30 border border-blue-500 text-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.4)]'
+                  : 'bg-blue-950/70 border border-blue-800/60 text-blue-400'
+              }`}>
+                <Bot className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-semibold text-slate-100">Agent 2 • India Node</h3>
-              <p className="text-xs text-amber-400 font-mono mt-0.5">Non-compliant • External</p>
-              <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] font-mono text-slate-500">
-                No direct DB access
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-slate-100 truncate">Agent 2 • India Node</span>
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                    flowStage === 'requesting' || flowStage === 'received' 
+                      ? 'bg-blue-400 animate-ping' 
+                      : flowStage === 'completed'
+                      ? 'bg-emerald-400'
+                      : 'bg-blue-400/80'
+                  }`} />
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[10px] text-slate-400">Requesting Agent</span>
+                  <span className="text-[9px] px-1 py-0 rounded bg-blue-950/80 text-blue-300 border border-blue-800/50 font-mono">South India</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-500 mt-0.5">Zero direct DB access</span>
               </div>
             </div>
 
-            {/* Center Connection Track - SPACED DUAL TRACKS */}
-            <div className="flex-1 px-8 flex flex-col items-center justify-center relative py-2 gap-6">
-              
-              {/* Top Track: Request Path (Agent 2 [IN, Left] -> Agent 1 [EU, Right]) */}
-              <div className="w-full relative flex items-center justify-center">
-                <div className={`w-full h-0.5 border-b border-dashed transition-colors duration-300 ${
-                  activeNode === 'agent2' ? 'border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'border-slate-700/80'
-                }`} />
-                <div className="absolute left-1/2 -translate-x-1/2">
-                  <Badge className={`text-[11px] font-mono px-3 py-0.5 rounded-full flex items-center gap-1 transition-all ${
-                    activeNode === 'agent2' 
-                      ? 'bg-amber-950 text-amber-400 border border-amber-800 shadow-[0_0_10px_rgba(245,158,11,0.3)] animate-pulse' 
-                      : 'bg-[#0a0f1d] text-slate-500 border border-slate-800'
-                  }`}>
-                    Request <ArrowRight className="w-3 h-3" />
-                  </Badge>
+            {/* Center Dynamic Communication Conduit */}
+            <div className="flex-1 px-2 sm:px-4 flex flex-col items-center justify-center gap-2.5 w-full max-w-md">
+              {/* Request Conduit: Agent 2 (IN) -> Agent 1 (EU) */}
+              <div className="w-full flex items-center justify-between text-[10px] font-mono gap-2">
+                <div className="flex items-center gap-1 text-slate-300 font-medium shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                  <span>Request</span>
                 </div>
+                <div className="flex-1 mx-1.5 h-2 bg-slate-900/90 border border-slate-800 rounded-full relative overflow-hidden flex items-center px-0.5">
+                  {flowStage === 'requesting' ? (
+                    <div className="h-1 w-14 rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-400 animate-beam-right shadow-[0_0_10px_rgba(59,130,246,0.9)]" />
+                  ) : (
+                    <div className="w-full flex items-center justify-around opacity-30 text-[8px] text-blue-400 tracking-widest select-none">
+                      <span>›</span><span>›</span><span>›</span><span>›</span><span>›</span>
+                    </div>
+                  )}
+                </div>
+                <Badge variant="outline" className={`text-[9px] px-2 py-0 border transition-all shrink-0 ${
+                  flowStage === 'requesting' 
+                    ? 'bg-blue-950 text-blue-200 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)] animate-pulse' 
+                    : 'bg-[#060b18] text-slate-400 border-slate-800'
+                }`}>
+                  {flowStage === 'requesting' ? 'IN → EU • Sending' : 'IN → EU'}
+                </Badge>
               </div>
 
-              {/* Bottom Track: Data Path (Agent 1 [EU, Right] -> Agent 2 [IN, Left]) */}
-              <div className="w-full relative flex items-center justify-center">
-                <div className={`w-full h-0.5 border-b border-dashed transition-colors duration-300 ${
-                  activeNode === 'agent1' ? 'border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'border-slate-700/80'
-                }`} />
-                <div className="absolute left-1/2 -translate-x-1/2">
-                  <Badge className={`text-[11px] font-mono px-3 py-0.5 rounded-full flex items-center gap-1 transition-all ${
-                    activeNode === 'agent1' 
-                      ? 'bg-emerald-950 text-emerald-400 border border-emerald-800 shadow-[0_0_10px_rgba(16,185,129,0.3)] animate-pulse' 
-                      : 'bg-[#0a0f1d] text-slate-500 border border-slate-800'
-                  }`}>
-                    <ArrowLeft className="w-3 h-3" /> Data
-                  </Badge>
+              {/* Response Conduit: Agent 1 (EU) -> Agent 2 (IN) */}
+              <div className="w-full flex items-center justify-between text-[10px] font-mono gap-2">
+                <div className="flex items-center gap-1 text-slate-300 font-medium shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                  <span>Response</span>
                 </div>
+                <div className="flex-1 mx-1.5 h-2 bg-slate-900/90 border border-slate-800 rounded-full relative overflow-hidden flex items-center px-0.5">
+                  {flowStage === 'received' ? (
+                    <div className="h-1 w-14 rounded-full bg-gradient-to-r from-purple-500 via-emerald-400 to-cyan-400 animate-beam-left shadow-[0_0_10px_rgba(168,85,247,0.9)]" />
+                  ) : flowStage === 'processing' ? (
+                    <div className="w-full h-1 bg-gradient-to-r from-purple-600/40 via-purple-400/80 to-purple-600/40 animate-pulse rounded-full" />
+                  ) : (
+                    <div className="w-full flex items-center justify-around opacity-30 text-[8px] text-purple-400 tracking-widest select-none">
+                      <span>‹</span><span>‹</span><span>‹</span><span>‹</span><span>‹</span>
+                    </div>
+                  )}
+                </div>
+                <Badge variant="outline" className={`text-[9px] px-2 py-0 border transition-all shrink-0 ${
+                  flowStage === 'received' 
+                    ? 'bg-purple-950 text-emerald-300 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] animate-pulse'
+                    : flowStage === 'processing'
+                    ? 'bg-purple-950 text-purple-200 border-purple-500 animate-pulse'
+                    : 'bg-[#060b18] text-slate-400 border-slate-800'
+                }`}>
+                  {flowStage === 'received' ? 'EU → IN • Delivered' : flowStage === 'processing' ? 'EU • Querying DB' : 'EU → IN'}
+                </Badge>
               </div>
-
             </div>
 
             {/* Right Node: Agent 1 (Europe) */}
-            <div className={`w-64 bg-[#070c18] border transition-all duration-300 rounded-xl p-4 relative ${
-              activeNode === 'agent1' ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'border-slate-800'
+            <div className={`flex items-center gap-3 bg-[#060b18] border transition-all duration-300 rounded-xl px-3.5 py-2.5 w-full lg:w-auto min-w-[225px] ${
+              flowStage === 'processing' 
+                ? 'border-purple-500 shadow-[0_0_18px_rgba(168,85,247,0.3)] bg-purple-950/30' 
+                : 'border-slate-800 hover:border-slate-700'
             }`}>
-              <div className="flex justify-between items-start mb-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-950/80 border border-emerald-800 flex items-center justify-center text-emerald-400">
-                  <Database className="w-4 h-4" />
-                </div>
-                <Badge className="bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] font-mono px-2 py-0.5 font-bold">
-                  EU
-                </Badge>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                flowStage === 'processing'
+                  ? 'bg-purple-600/30 border border-purple-500 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.4)]'
+                  : 'bg-purple-950/70 border border-purple-800/60 text-purple-400'
+              }`}>
+                <Database className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-semibold text-slate-100">Agent 1 • Europe Node</h3>
-              <p className="text-xs text-emerald-400 font-mono mt-0.5">Attested • GDPR compliant</p>
-              <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] font-mono text-slate-500">
-                Exclusive local DB access
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-slate-100 truncate">Agent 1 • Europe Node</span>
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                    flowStage === 'processing' 
+                      ? 'bg-purple-400 animate-ping' 
+                      : flowStage === 'completed'
+                      ? 'bg-emerald-400'
+                      : 'bg-purple-400/80'
+                  }`} />
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[10px] text-slate-400">Data Provider</span>
+                  <span className="text-[9px] px-1 py-0 rounded bg-purple-950/80 text-purple-300 border border-purple-800/50 font-mono">North Europe</span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[10px] text-slate-400">Accuracy</span>
+                  <span className="text-[10px] font-mono font-semibold text-purple-300 bg-purple-950/80 border border-purple-800/50 px-1.5 py-0.5 rounded">
+                    {agent1Accuracy ?? '—'}
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-500 mt-0.5">Exclusive local DB access</span>
               </div>
             </div>
 
           </div>
         </section>
 
-        {/* Bottom Section: Split Workspace (Console + Audit Trail) */}
-        <div className="flex-1 flex gap-5 min-h-0 overflow-hidden">
+        {/* Main Content Workspace: Chat + Collapsible A2A Activity Panel */}
+        <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">
           
-          {/* Left Column: Agent 2 Console */}
-          <div className="flex-1 bg-[#070c18] border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-sm">
+          {/* Conversational AI Chat Window */}
+          <div className="flex-1 bg-[#091124] border border-slate-800/90 rounded-2xl flex flex-col overflow-hidden shadow-sm">
             
-            {/* Console Header */}
-            <div className="px-4 py-3 border-b border-slate-800/90 bg-[#090e1c] flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-amber-500" />
-                <h3 className="font-semibold text-slate-200 text-sm">Agent 2 console</h3>
-                <Badge className="bg-amber-950 text-amber-400 border border-amber-800 text-[10px] font-mono px-1.5 py-0.2">
-                  IN
-                </Badge>
-              </div>
-              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                USER → EXTERNAL NODE
-              </span>
-            </div>
-
-            {/* Console Main Content */}
-            <div className="flex-1 overflow-y-auto p-5 scroll-smooth" ref={chatScrollRef}>
+            {/* Scrollable Conversation Stream */}
+            <div className="flex-1 overflow-y-auto p-5 scroll-smooth space-y-4" ref={chatScrollRef}>
               
-              {!currentSessionId || currentLogs.filter(l => l.role === 'user' || l.role === 'agent2').length === 0 ? (
-                /* Empty Console State with Quick Prompt Chips */
+              {currentLogs.length === 0 ? (
+                /* Empty Chat Greeting State */
                 <div className="h-full flex flex-col items-center justify-center text-center p-6 my-auto">
-                  <h3 className="text-base font-semibold text-slate-100 mb-1">Ask the India node for EU customer data</h3>
-                  <p className="text-xs text-slate-400 max-w-md mb-8 leading-relaxed">
-                    Agent 2 has no database access and must route every request through Agent 1 in Europe. Watch what crosses the border.
+                  <div className="w-12 h-12 rounded-2xl bg-blue-950/80 border border-blue-700/60 flex items-center justify-center text-blue-400 mb-3 shadow-md shadow-blue-500/10">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-semibold text-slate-100 mb-1">
+                    How can I assist you with European customer data?
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
+                    I am Agent 2 in South India. I formulate your request and coordinate with Agent 1 in North Europe to answer your questions accurately.
                   </p>
                   
                   {/* Preset Prompt Pills */}
-                  <div className="grid grid-cols-2 gap-3 max-w-lg w-full">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-2xl w-full">
                     {quickPrompts.map((promptText, idx) => (
                       <button
                         key={idx}
                         onClick={() => executeSimulation(promptText)}
                         disabled={isProcessing}
-                        className="bg-[#0b1325] hover:bg-[#121c33] text-slate-300 border border-slate-800/90 hover:border-slate-700 text-xs px-3.5 py-2.5 rounded-full text-left font-mono transition-all shadow-sm truncate hover:text-slate-100 disabled:opacity-50"
+                        className="bg-[#060b18] hover:bg-[#0c1630] text-slate-300 hover:text-blue-300 border border-slate-800/90 hover:border-blue-500/40 text-xs px-3.5 py-2.5 rounded-xl text-left transition-all shadow-sm flex items-center justify-between group disabled:opacity-50 gap-2"
                       >
-                        {promptText}
+                        <span className="leading-snug">{promptText}</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-blue-400 shrink-0 transition-colors" />
                       </button>
                     ))}
                   </div>
                 </div>
               ) : (
-                /* Active Chat Log */
-                <div className="space-y-4">
-                  {currentLogs.map((log) => {
-                    if (log.role === 'user') {
-                      return (
-                        <div key={log.id} className="flex justify-end">
-                          <div className="flex items-center gap-2 max-w-[85%]">
-                            <div className="bg-[#0e172a] border border-slate-700/80 text-slate-200 text-xs rounded-xl px-4 py-2.5 shadow-sm">
-                              {log.content.replace(/^Prompt received by Agent 2 \(India\): "/, '').replace(/"$/, '')}
-                            </div>
-                            <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
-                              <User className="w-3.5 h-3.5 text-slate-300" />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    if (log.role === 'agent2' && log.customerData) {
-                      const data = log.customerData;
-                      return (
-                        <div key={log.id} className="flex justify-start items-start gap-3">
-                          <div className="w-7 h-7 rounded-full bg-amber-950/80 border border-amber-800 flex items-center justify-center shrink-0 text-amber-400">
-                            <ShieldAlert className="w-3.5 h-3.5" />
-                          </div>
-                          
-                          {data.isBulk ? (
-                            /* Bulk Data List Card */
-                            <div className="bg-[#0a0f1d] border border-slate-800/90 rounded-xl p-4 text-xs font-mono text-slate-300 max-w-md w-full space-y-2 shadow-sm">
-                              <div className="font-semibold text-slate-100 text-sm border-b border-slate-800 pb-2">
-                                Records for {data.groupValue} ({data.records.length} matches)
-                              </div>
-                              <div className="max-h-48 overflow-y-auto space-y-1 text-slate-400 pr-1">
-                                {data.records.map((r: any, idx: number) => (
-                                  <div key={idx} className="flex justify-between border-b border-slate-800/40 py-1">
-                                    <span className="text-slate-200">{r.name} ({r.id})</span>
-                                    <span className="text-slate-500">{r.city}, {r.country}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ) : (
-                            /* Single Customer Profile Card */
-                            <div className="bg-[#0a0f1d] border border-slate-800/90 rounded-xl p-4 text-xs font-mono text-slate-300 max-w-md w-full space-y-1.5 shadow-sm">
-                              <div className="font-semibold text-slate-100 text-sm mb-2 block border-b border-slate-800 pb-2">
-                                {data.customer.name}
-                              </div>
-                              {(data.wantsId || data.fetchAll) && (
-                                <div><span className="text-slate-500 font-semibold">ID:</span> <span className="text-slate-300">{data.customer.id}</span></div>
-                              )}
-                              <div><span className="text-slate-500 font-semibold">Region:</span> <span className="text-slate-300">{data.customer.city}, {data.customer.country}</span></div>
-                              {(data.wantsPhone || data.fetchAll) && (
-                                <div><span className="text-slate-500 font-semibold">Phone:</span> <span className="text-slate-300">{data.customer.phone}</span></div>
-                              )}
-                              {(data.wantsAddress || data.fetchAll) && (
-                                <div><span className="text-slate-500 font-semibold">Address:</span> <span className="text-slate-300">{data.customer.address}</span></div>
-                              )}
-                              {(data.wantsGps || data.fetchAll) && (
-                                <div><span className="text-slate-500 font-semibold">GPS:</span> <span className="text-slate-300">{data.customer.gps}</span></div>
-                              )}
-                              {(data.wantsStatus || data.fetchAll) && (
-                                <div><span className="text-slate-500 font-semibold">Order status:</span> <span className="text-slate-300">{data.customer.order_status}</span></div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-
-                    if (log.role === 'agent2' && !log.customerData && !log.content.includes("Received user request")) {
-                      return (
-                        <div key={log.id} className="flex justify-start items-start gap-3">
-                          <div className="w-7 h-7 rounded-full bg-amber-950/80 border border-amber-800 flex items-center justify-center shrink-0 text-amber-400">
-                            <ShieldAlert className="w-3.5 h-3.5" />
-                          </div>
-                          <div className="bg-[#0a0f1d] border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-300">
+                /* Active Conversation Messages */
+                currentLogs.map((log) => {
+                  if (log.role === 'user') {
+                    return (
+                      <div key={log.id} className="flex justify-end">
+                        <div className="flex items-start gap-2.5 max-w-[80%]">
+                          <div className="bg-[#122347] border border-blue-600/40 text-slate-100 text-sm rounded-2xl px-4 py-3 shadow-sm">
                             {log.content}
                           </div>
+                          <div className="w-8 h-8 rounded-full bg-blue-950 border border-blue-700 flex items-center justify-center shrink-0 text-blue-300">
+                            <User className="w-4 h-4" />
+                          </div>
                         </div>
-                      );
-                    }
-
-                    return null;
-                  })}
-
-                  {/* Loading Indicator */}
-                  {isProcessing && (
-                    <div className="flex justify-start items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-amber-950/80 border border-amber-800 flex items-center justify-center shrink-0 text-amber-400">
-                        <ShieldAlert className="w-3.5 h-3.5" />
                       </div>
-                      <div className="bg-[#0a0f1d] border border-slate-800/90 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-400 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping inline-block" />
-                        <span>Routing through Agent 1...</span>
+                    );
+                  }
+
+                  return (
+                    <div key={log.id} className="flex justify-start items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-950/80 border border-blue-700/80 flex items-center justify-center shrink-0 text-blue-400 shadow-sm mt-0.5">
+                        <Bot className="w-4 h-4" />
+                      </div>
+                      
+                      <div className="space-y-1.5 max-w-2xl w-full">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-semibold text-blue-400">Agent 2 (India)</span>
+                          <span className="text-[10px] text-slate-500 font-mono">{log.timestamp}</span>
+                        </div>
+
+                        <div className="bg-[#060b18] border border-slate-800/90 rounded-2xl p-4 text-slate-200 shadow-sm">
+                          <FormattedMessage text={log.content} />
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
+                  );
+                })
               )}
 
+              {/* In-flight Processing Loading State */}
+              {isProcessing && (
+                <div className="flex justify-start items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-950/80 border border-blue-700/80 flex items-center justify-center shrink-0 text-blue-400 animate-pulse">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                  <div className="bg-[#060b18] border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-300 flex items-center gap-3 shadow-sm">
+                    <div className="flex gap-1 items-center">
+                      <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce [animation-delay:-0.3s]" />
+                      <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:-0.15s]" />
+                      <span className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" />
+                    </div>
+                    <span>
+                      {activeNode === 'agent1' 
+                        ? "Agent 1 (Europe) processing query..." 
+                        : "Agent 2 coordinating cross-border request..."}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Input Form */}
-            <div className="p-3 bg-[#080d1a] border-t border-slate-800/90 shrink-0">
+            {/* Input Bar */}
+            <div className="p-3 bg-[#060b18] border-t border-slate-800/90 shrink-0">
               <form onSubmit={handleFormSubmit} className="flex gap-2 items-center">
                 <Input
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder="e.g. What is her address?"
-                  className="flex-1 bg-[#0a0f1d] border-slate-800 text-slate-100 text-xs placeholder:text-slate-600 focus-visible:ring-emerald-500/40 rounded-lg h-9"
+                  placeholder="Ask about European customers, order status, or contact details..."
+                  className="flex-1 bg-[#091124] border-slate-800 text-slate-100 text-xs placeholder:text-slate-500 focus-visible:ring-blue-500/40 rounded-xl h-10 px-3.5"
                   disabled={isProcessing}
                 />
                 <Button 
                   type="submit" 
                   disabled={isProcessing || !inputText.trim()} 
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg h-9 w-9 p-0 flex items-center justify-center shrink-0 shadow-sm transition-colors"
+                  className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl h-10 w-10 p-0 flex items-center justify-center shrink-0 shadow-sm transition-colors disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -943,91 +689,90 @@ export default function Home() {
 
           </div>
 
-          {/* Right Column: Audit Trail */}
-          <div className="w-[360px] lg:w-[400px] shrink-0 bg-[#070c18] border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-sm">
-            
-            {/* Audit Header */}
-            <div className="px-4 py-3 border-b border-slate-800/90 bg-[#090e1c] flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-emerald-500" />
-                <h3 className="font-semibold text-slate-200 text-sm">Audit trail</h3>
-              </div>
-              <div className="flex items-center gap-1.5 font-mono text-[10px]">
-                <Button
-                  onClick={downloadAuditTrailJSON}
-                  disabled={currentLogs.length === 0}
-                  variant="outline"
-                  size="sm"
-                  className="h-6 bg-[#0b1325] hover:bg-[#121c33] border-slate-800 text-slate-300 text-[10px] px-2 gap-1"
-                  title="Download JSON Audit Log"
-                >
-                  <Download className="w-3 h-3 text-emerald-400" />
-                  JSON
-                </Button>
-                <Badge variant="outline" className="bg-slate-900 border-slate-800 text-slate-400 px-1.5 py-0.2">
-                  {totalEvents} EVENTS
-                </Badge>
-                <Badge variant="outline" className="bg-emerald-950/60 border-emerald-800 text-emerald-400 px-1.5 py-0.2">
-                  {totalHops} HOPS
-                </Badge>
-              </div>
-            </div>
-
-            {/* Audit Log Stream - PURE AGENT TO AGENT LOG */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2.5 font-mono text-xs" ref={auditScrollRef}>
-              {currentLogs.length === 0 ? (
-                /* Empty Audit Trail State */
-                <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-60 my-auto">
-                  <Bot className="w-8 h-8 text-slate-600 mb-2" />
-                  <p className="text-xs text-slate-500 max-w-[200px] leading-relaxed">
-                    Immutable log is empty. Run a prompt to begin capturing telemetry.
-                  </p>
+          {/* Minimal 3-Step Collapsible A2A Activity Panel */}
+          {isActivityOpen && (
+            <div className="w-[320px] lg:w-[350px] shrink-0 bg-[#091124] border border-slate-800/90 rounded-2xl flex flex-col overflow-hidden shadow-sm transition-all">
+              
+              {/* Activity Header */}
+              <div className="px-4 py-3 border-b border-slate-800/80 bg-[#070e20] flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-blue-400" />
+                  <h3 className="font-semibold text-slate-200 text-xs tracking-tight">A2A Communication Activity</h3>
                 </div>
-              ) : (
-                currentLogs.map((log) => {
-                  let styleClass = "bg-[#0a0f1d] border-slate-800/80 text-slate-300";
-                  let headerBadge = null;
+                <div className="flex items-center gap-1">
+                  <Badge variant="outline" className="bg-blue-950/60 border-blue-800 text-blue-300 text-[10px] px-1.5 py-0.2 font-mono">
+                    3 Hops
+                  </Badge>
+                  <button 
+                    onClick={() => setIsActivityOpen(false)}
+                    className="text-slate-500 hover:text-slate-300 p-1 transition-colors"
+                    title="Close Panel"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
 
-                  if (log.role === 'user') {
-                    styleClass = "bg-[#0a0f1d] border-slate-800/80 text-slate-300";
-                    headerBadge = (
-                      <span className="text-slate-400 font-semibold flex items-center gap-1">
-                        <Info className="w-3.5 h-3.5 text-slate-500" /> USER
-                      </span>
-                    );
-                  } else if (log.role === 'agent2') {
-                    styleClass = "bg-[#0a0f1d] border-amber-950 text-amber-200/90";
-                    headerBadge = (
-                      <span className="text-amber-400 font-semibold flex items-center gap-1">
-                        <Info className="w-3.5 h-3.5 text-amber-500" /> AGENT 2 • IN
-                      </span>
-                    );
-                  } else if (log.role === 'agent1') {
-                    styleClass = "bg-amber-950/20 border-amber-700/50 text-amber-300/90";
-                    headerBadge = (
-                      <span className="text-amber-400 font-semibold flex items-center gap-1">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> AGENT 1 • EU
-                      </span>
-                    );
-                  }
+              {/* Minimal 3 Connected Cards */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 font-sans">
+                <div className="text-[11px] text-slate-400 leading-relaxed mb-3">
+                  Every query follows an isolated 3-step cross-border lifecycle:
+                </div>
+
+                {activitySteps.map((step, idx) => {
+                  const isBlue = step.color === 'blue';
+                  const isPurple = step.color === 'purple';
+                  const isEmerald = step.color === 'emerald';
 
                   return (
                     <div 
-                      key={log.id} 
-                      className={`p-3 rounded-lg border text-[11px] leading-relaxed transition-all shadow-sm ${styleClass}`}
+                      key={idx} 
+                      className={`p-3.5 rounded-xl border transition-all ${
+                        isBlue ? 'bg-[#070d1d] border-blue-900/50' :
+                        isPurple ? 'bg-[#0b0a1d] border-purple-900/50' :
+                        'bg-[#06121a] border-emerald-900/50'
+                      }`}
                     >
-                      <div className="flex justify-between items-center mb-1.5 text-[10px]">
-                        {headerBadge}
-                        <span className="text-slate-500 font-mono">{log.timestamp}</span>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${
+                            isBlue ? 'bg-blue-400' :
+                            isPurple ? 'bg-purple-400' :
+                            'bg-emerald-400'
+                          }`} />
+                          <span className="text-xs font-semibold text-slate-200">
+                            {step.title}
+                          </span>
+                        </div>
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+                          isBlue ? 'bg-blue-950 text-blue-300 border-blue-800' :
+                          isPurple ? 'bg-purple-950 text-purple-300 border-purple-800' :
+                          'bg-emerald-950 text-emerald-300 border-emerald-800'
+                        }`}>
+                          {step.badge}
+                        </span>
                       </div>
-                      <p className="break-words">{log.content}</p>
+
+                      <div className="text-[11px] font-medium text-slate-400 mb-1">
+                        {step.node}
+                      </div>
+
+                      <p className="text-[11px] text-slate-500 leading-relaxed">
+                        {step.description}
+                      </p>
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
 
-          </div>
+                {/* Status Notice */}
+                <div className="mt-4 p-3 bg-[#060b18] border border-slate-800/80 rounded-xl text-[11px] text-slate-400 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                  <span>Cross-border A2A link verified &bull; Standard telemetry</span>
+                </div>
+              </div>
+
+            </div>
+          )}
 
         </div>
 
@@ -1035,4 +780,142 @@ export default function Home() {
 
     </div>
   );
+}
+
+// Format markdown text and clean Shadcn-style tables
+function FormattedMessage({ text }: { text: string }) {
+  if (!text) return null;
+
+  // Check if text contains a markdown table
+  if (text.includes('|') && text.includes('\n|')) {
+    const lines = text.split('\n');
+    const introLines: string[] = [];
+    const tableLines: string[] = [];
+    const outroLines: string[] = [];
+    let state: 'intro' | 'table' | 'outro' = 'intro';
+
+    for (const line of lines) {
+      if (line.trim().startsWith('|')) {
+        state = 'table';
+        tableLines.push(line.trim());
+      } else if (state === 'table') {
+        state = 'outro';
+        outroLines.push(line);
+      } else if (state === 'intro') {
+        introLines.push(line);
+      } else {
+        outroLines.push(line);
+      }
+    }
+
+    if (tableLines.length >= 2) {
+      const headerCols = tableLines[0].split('|').slice(1, -1).map(c => c.trim());
+      // Skip line index 1 (table divider like |---|---|)
+      const dataRows = tableLines.slice(2).map(row => 
+        row.split('|').slice(1, -1).map(c => c.trim())
+      );
+
+      return (
+        <div className="space-y-3">
+          {introLines.length > 0 && (
+            <p className="text-slate-200 text-sm leading-relaxed">{introLines.join('\n')}</p>
+          )}
+          <div className="overflow-x-auto rounded-xl border border-slate-800 bg-[#080e20] shadow-sm max-h-80 overflow-y-auto">
+            <table className="w-full text-left text-xs text-slate-300 divide-y divide-slate-800">
+              <thead className="bg-[#0b142c] text-[11px] font-semibold text-slate-400 uppercase tracking-wider sticky top-0">
+                <tr>
+                  {headerCols.map((col, idx) => (
+                    <th key={idx} className="px-3.5 py-2.5">{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                {dataRows.map((row, rIdx) => (
+                  <tr key={rIdx} className="hover:bg-slate-800/30 transition-colors">
+                    {row.map((cell, cIdx) => {
+                      const cellLower = cell.toLowerCase();
+                      const isDelivered = cellLower === 'delivered';
+                      const isShipped = cellLower === 'shipped';
+                      const isProcessing = cellLower === 'processing';
+                      const isCancelled = cellLower === 'cancelled' || cellLower === 'canceled';
+
+                      if (isDelivered || isShipped || isProcessing || isCancelled) {
+                        return (
+                          <td key={cIdx} className="px-3.5 py-2">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                              isDelivered ? 'bg-emerald-950/70 text-emerald-300 border-emerald-800' :
+                              isShipped ? 'bg-blue-950/70 text-blue-300 border-blue-800' :
+                              isProcessing ? 'bg-amber-950/70 text-amber-300 border-amber-800' :
+                              'bg-rose-950/40 text-rose-300 border-rose-900/50'
+                            }`}>
+                              {cell}
+                            </span>
+                          </td>
+                        );
+                      }
+                      return (
+                        <td key={cIdx} className="px-3.5 py-2 whitespace-nowrap text-slate-200">
+                          {cell}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {outroLines.length > 0 && (
+            <p className="text-slate-300 text-sm leading-relaxed">{outroLines.join('\n')}</p>
+          )}
+        </div>
+      );
+    }
+  }
+
+  // Otherwise render formatted text (bold, bullet points, clean spacing)
+  const rawLines = text.split('\n');
+  const items: { type: 'bullet' | 'paragraph'; text: string }[] = [];
+  
+  for (let i = 0; i < rawLines.length; i++) {
+    const trimmed = rawLines[i].trim();
+    if (!trimmed) continue;
+    
+    if (trimmed === '•' || trimmed === '-') {
+      // Detached bullet: merge with next non-empty line
+      if (i + 1 < rawLines.length && rawLines[i + 1].trim()) {
+        items.push({ type: 'bullet', text: rawLines[i + 1].trim() });
+        i++;
+      }
+    } else if (trimmed.startsWith('•') || trimmed.startsWith('- ')) {
+      items.push({ type: 'bullet', text: trimmed.replace(/^[•\-]\s*/, '') });
+    } else {
+      items.push({ type: 'paragraph', text: trimmed });
+    }
+  }
+
+  return (
+    <div className="space-y-2 text-sm text-slate-200 leading-relaxed">
+      {items.map((item, idx) => {
+        if (item.type === 'bullet') {
+          return (
+            <div key={idx} className="flex items-start gap-2.5 pl-1 py-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2 shrink-0 shadow-[0_0_6px_rgba(59,130,246,0.6)]" />
+              <span className="text-slate-200 leading-snug">{renderBold(item.text)}</span>
+            </div>
+          );
+        }
+        return <p key={idx} className="leading-relaxed">{renderBold(item.text)}</p>;
+      })}
+    </div>
+  );
+}
+
+function renderBold(str: string) {
+  const parts = str.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={idx} className="font-semibold text-slate-100">{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
 }
