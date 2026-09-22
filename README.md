@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AgentVerse
 
-## Getting Started
+**Cross-Border Agent-to-Agent (A2A) Governance & GDPR Compliance Framework**
 
-First, run the development server:
+AgentVerse demonstrates an autonomous agent-to-agent protocol under cross-border data protection regulations (such as GDPR Chapter V). It features external requesting nodes, data-holding European nodes, independent GlassBox telemetry monitoring, and real-time compliance evaluation.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🏛️ Architecture Overview
+
+```
+User → Agent 2 (India Node) ──[A2A Request]──► Agent 1 (Europe Node) ──► Synthetic DB
+                                                     │
+                                                     ▼ [Observed Independently]
+                                                  GlassBox ──► Compliance Flagging
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Agent 2 (India Node):** External requesting agent with no direct database access. Translates user queries and initiates cross-border A2A requests.
+- **Agent 1 (Europe Node):** Synthetic customer database owner. Validates incoming requests, applies data minimization policies, and independently decides compliance responses.
+- **GlassBox (Independent Monitor):** External observer that passively analyzes telemetry between nodes to detect and flag statutory non-compliance in real-time.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📂 Project Structure
 
-## Learn More
+```
+agentverse/
+├── backend/                  # FastAPI backend server
+│   ├── app/
+│   │   ├── a2a/              # Agent-to-Agent protocol & message bus
+│   │   ├── agents/           # Agent 1 (Europe) & Agent 2 (India) logic
+│   │   ├── compliance/       # GDPR compliance evaluators & rules
+│   │   ├── audit/            # Forensic audit logs & telemetry
+│   │   └── data/             # Synthetic European customer records
+│   ├── tests/                # Accuracy, GDPR, and security test suites
+│   └── requirements.txt
+├── demo-ui/                  # Next.js 16 + Tailwind CSS frontend
+│   ├── src/
+│   │   ├── app/              # Dashboard, audit trail, and docs
+│   │   └── components/       # Architecture visualizer & Mermaid diagrams
+│   └── package.json
+├── docs/                     # Test case specifications & GDPR docs
+│   └── gdpr-a2a-glassbox-test-case.md
+├── DESIGN.md                 # Design system & tokens
+└── .gitignore
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚀 Quick Start
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. Backend (FastAPI)
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate        # Windows
+source venv/bin/activate       # Linux/macOS
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
 
-## Deploy on Vercel
+### 2. Frontend (Next.js)
+```bash
+cd demo-ui
+npm install
+npm run dev
+```
+Visit `http://localhost:3000` for the interactive dashboard and `http://localhost:3000/docs` for architecture specifications.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🧪 Testing & Verification
+
+Run automated test suites from the `backend/` directory:
+```bash
+pytest tests/ -v
+```

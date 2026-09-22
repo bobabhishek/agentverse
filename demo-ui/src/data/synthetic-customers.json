@@ -1,0 +1,1002 @@
+[
+  {
+    "id": "SYN-CUST-1001",
+    "name": "Hans Russo",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "order_status": "Delivered",
+    "phone": "+47-304-4167",
+    "address": "483 Church Rd, Amsterdam",
+    "gps": "46.5328, 6.4501"
+  },
+  {
+    "id": "SYN-CUST-1002",
+    "name": "Amelia Smith",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Delivered",
+    "phone": "+47-739-6950",
+    "address": "854 Main St, Paris",
+    "gps": "51.0561, -7.9619"
+  },
+  {
+    "id": "SYN-CUST-1003",
+    "name": "Emma Davies",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "order_status": "Shipped",
+    "phone": "+33-426-9878",
+    "address": "469 High St, Copenhagen",
+    "gps": "59.0005, -2.2110"
+  },
+  {
+    "id": "SYN-CUST-1004",
+    "name": "Alex Davies",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "order_status": "Delivered",
+    "phone": "+43-335-3851",
+    "address": "435 High St, Amsterdam",
+    "gps": "41.1130, 3.1190"
+  },
+  {
+    "id": "SYN-CUST-1005",
+    "name": "Jean Dubois",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "order_status": "Cancelled",
+    "phone": "+40-750-8857",
+    "address": "400 Church Rd, Amsterdam",
+    "gps": "56.5499, 1.0227"
+  },
+  {
+    "id": "SYN-CUST-1006",
+    "name": "Emma García",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Shipped",
+    "phone": "+47-983-1785",
+    "address": "781 Park Ave, London",
+    "gps": "58.8102, 16.1370"
+  },
+  {
+    "id": "SYN-CUST-1007",
+    "name": "Olivia Dubois",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Shipped",
+    "phone": "+48-512-7186",
+    "address": "217 Park Ave, Berlin",
+    "gps": "45.9602, 0.9122"
+  },
+  {
+    "id": "SYN-CUST-1008",
+    "name": "Oliver Smith",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "order_status": "Cancelled",
+    "phone": "+31-145-7753",
+    "address": "493 Main St, Amsterdam",
+    "gps": "45.0508, -5.3695"
+  },
+  {
+    "id": "SYN-CUST-1009",
+    "name": "Olivia Brown",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "order_status": "Shipped",
+    "phone": "+34-229-8812",
+    "address": "760 Church Rd, Copenhagen",
+    "gps": "51.9942, 5.6147"
+  },
+  {
+    "id": "SYN-CUST-1010",
+    "name": "Oliver Brown",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Delivered",
+    "phone": "+47-151-3399",
+    "address": "319 High St, London",
+    "gps": "46.2833, 19.9156"
+  },
+  {
+    "id": "SYN-CUST-1011",
+    "name": "Emma Evans",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Delivered",
+    "phone": "+33-405-1975",
+    "address": "956 Main St, London",
+    "gps": "48.8462, -4.2056"
+  },
+  {
+    "id": "SYN-CUST-1012",
+    "name": "Mia Schmidt",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Delivered",
+    "phone": "+37-150-7437",
+    "address": "714 Main St, Madrid",
+    "gps": "44.0298, 15.8685"
+  },
+  {
+    "id": "SYN-CUST-1013",
+    "name": "Alex Russo",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Cancelled",
+    "phone": "+49-778-7450",
+    "address": "401 Main St, Madrid",
+    "gps": "47.5646, 7.7378"
+  },
+  {
+    "id": "SYN-CUST-1014",
+    "name": "Emma Davies",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Delivered",
+    "phone": "+44-893-3014",
+    "address": "302 High St, Rome",
+    "gps": "41.0027, 0.0520"
+  },
+  {
+    "id": "SYN-CUST-1015",
+    "name": "Maria Schmidt",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "order_status": "Shipped",
+    "phone": "+39-258-9766",
+    "address": "371 Park Ave, Amsterdam",
+    "gps": "57.3792, -1.6352"
+  },
+  {
+    "id": "SYN-CUST-1016",
+    "name": "Amelia Martínez",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Delivered",
+    "phone": "+36-132-2993",
+    "address": "442 Park Ave, Berlin",
+    "gps": "52.4021, -5.7769"
+  },
+  {
+    "id": "SYN-CUST-1017",
+    "name": "Emma Dubois",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Cancelled",
+    "phone": "+37-129-1056",
+    "address": "616 Church Rd, London",
+    "gps": "47.2643, -4.3995"
+  },
+  {
+    "id": "SYN-CUST-1018",
+    "name": "Lucas Davies",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Processing",
+    "phone": "+30-852-7092",
+    "address": "579 Park Ave, Rome",
+    "gps": "48.4245, 11.4533"
+  },
+  {
+    "id": "SYN-CUST-1019",
+    "name": "Liam Dubois",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Delivered",
+    "phone": "+49-471-7059",
+    "address": "266 Church Rd, Paris",
+    "gps": "50.5829, -7.8549"
+  },
+  {
+    "id": "SYN-CUST-1020",
+    "name": "Mia Nielsen",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "order_status": "Cancelled",
+    "phone": "+49-339-3858",
+    "address": "14 Park Ave, Copenhagen",
+    "gps": "44.6923, 14.9874"
+  },
+  {
+    "id": "SYN-CUST-1021",
+    "name": "Amelia Nielsen",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Cancelled",
+    "phone": "+35-464-4800",
+    "address": "75 Main St, Madrid",
+    "gps": "59.8074, 7.9669"
+  },
+  {
+    "id": "SYN-CUST-1022",
+    "name": "Elias Schmidt",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Processing",
+    "phone": "+42-755-1804",
+    "address": "742 High St, Rome",
+    "gps": "41.5239, 10.4206"
+  },
+  {
+    "id": "SYN-CUST-1023",
+    "name": "Alex Jones",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "order_status": "Shipped",
+    "phone": "+30-307-1174",
+    "address": "693 High St, Amsterdam",
+    "gps": "48.9366, 6.4668"
+  },
+  {
+    "id": "SYN-CUST-1024",
+    "name": "Oliver Smith",
+    "country": "Sweden",
+    "city": "Stockholm",
+    "order_status": "Processing",
+    "phone": "+40-159-4502",
+    "address": "489 Church Rd, Stockholm",
+    "gps": "59.4816, 11.6552"
+  },
+  {
+    "id": "SYN-CUST-1025",
+    "name": "Noah Russo",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Delivered",
+    "phone": "+47-212-6599",
+    "address": "241 Main St, Paris",
+    "gps": "48.5024, 16.5439"
+  },
+  {
+    "id": "SYN-CUST-1026",
+    "name": "Anna Martínez",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Processing",
+    "phone": "+38-536-4255",
+    "address": "244 Church Rd, Berlin",
+    "gps": "57.0269, 9.6378"
+  },
+  {
+    "id": "SYN-CUST-1027",
+    "name": "Lucas Dubois",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Shipped",
+    "phone": "+40-595-9059",
+    "address": "995 Main St, London",
+    "gps": "43.3332, 2.7934"
+  },
+  {
+    "id": "SYN-CUST-1028",
+    "name": "Elias Dubois",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Shipped",
+    "phone": "+44-203-5779",
+    "address": "990 Main St, Berlin",
+    "gps": "59.2362, 18.6231"
+  },
+  {
+    "id": "SYN-CUST-1029",
+    "name": "Mia Jones",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "order_status": "Processing",
+    "phone": "+40-473-4390",
+    "address": "51 Church Rd, Amsterdam",
+    "gps": "40.1468, 1.5553"
+  },
+  {
+    "id": "SYN-CUST-1030",
+    "name": "Alex García",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Processing",
+    "phone": "+36-355-5014",
+    "address": "780 Church Rd, Madrid",
+    "gps": "48.3245, 2.9131"
+  },
+  {
+    "id": "SYN-CUST-1031",
+    "name": "Noah Evans",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Delivered",
+    "phone": "+37-348-4345",
+    "address": "367 High St, Paris",
+    "gps": "56.0862, 6.1466"
+  },
+  {
+    "id": "SYN-CUST-1032",
+    "name": "Elias Brown",
+    "country": "Sweden",
+    "city": "Stockholm",
+    "order_status": "Shipped",
+    "phone": "+45-456-9470",
+    "address": "623 Main St, Stockholm",
+    "gps": "43.1676, 1.2978"
+  },
+  {
+    "id": "SYN-CUST-1033",
+    "name": "Alex Müller",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Shipped",
+    "phone": "+36-795-5921",
+    "address": "254 Park Ave, Berlin",
+    "gps": "54.3915, 9.2258"
+  },
+  {
+    "id": "SYN-CUST-1034",
+    "name": "Maria Smith",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "order_status": "Shipped",
+    "phone": "+46-237-4359",
+    "address": "891 Church Rd, Copenhagen",
+    "gps": "41.8457, 8.8773"
+  },
+  {
+    "id": "SYN-CUST-1035",
+    "name": "Liam Lefebvre",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Delivered",
+    "phone": "+34-149-1476",
+    "address": "810 Church Rd, Berlin",
+    "gps": "44.7601, 5.7326"
+  },
+  {
+    "id": "SYN-CUST-1036",
+    "name": "Elias García",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Shipped",
+    "phone": "+42-995-1109",
+    "address": "815 Main St, Paris",
+    "gps": "56.8766, 8.9287"
+  },
+  {
+    "id": "SYN-CUST-1037",
+    "name": "Elias Davies",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Cancelled",
+    "phone": "+41-788-6172",
+    "address": "619 High St, Madrid",
+    "gps": "56.0194, -3.8934"
+  },
+  {
+    "id": "SYN-CUST-1038",
+    "name": "Anna Russo",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Cancelled",
+    "phone": "+32-965-8475",
+    "address": "578 Park Ave, Madrid",
+    "gps": "58.1597, -1.9976"
+  },
+  {
+    "id": "SYN-CUST-1039",
+    "name": "Noah García",
+    "country": "Sweden",
+    "city": "Stockholm",
+    "order_status": "Delivered",
+    "phone": "+47-344-2903",
+    "address": "544 Church Rd, Stockholm",
+    "gps": "52.6121, 17.2550"
+  },
+  {
+    "id": "SYN-CUST-1040",
+    "name": "Olivia Brown",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Cancelled",
+    "phone": "+48-236-2730",
+    "address": "532 Park Ave, Paris",
+    "gps": "57.4067, -0.7863"
+  },
+  {
+    "id": "SYN-CUST-1041",
+    "name": "Elias Nielsen",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Cancelled",
+    "phone": "+47-600-9992",
+    "address": "309 Main St, Madrid",
+    "gps": "50.3371, 17.9061"
+  },
+  {
+    "id": "SYN-CUST-1042",
+    "name": "Liam Nielsen",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Cancelled",
+    "phone": "+42-840-9224",
+    "address": "473 Church Rd, Rome",
+    "gps": "45.5996, 17.4402"
+  },
+  {
+    "id": "SYN-CUST-1043",
+    "name": "Oliver Martínez",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "order_status": "Cancelled",
+    "phone": "+36-288-5818",
+    "address": "675 Church Rd, Amsterdam",
+    "gps": "40.4957, 12.1990"
+  },
+  {
+    "id": "SYN-CUST-1044",
+    "name": "Sofia Dubois",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Shipped",
+    "phone": "+44-189-9320",
+    "address": "299 High St, Berlin",
+    "gps": "58.6838, 14.6700"
+  },
+  {
+    "id": "SYN-CUST-1045",
+    "name": "Anna Evans",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Processing",
+    "phone": "+37-570-6924",
+    "address": "823 High St, London",
+    "gps": "57.4630, 14.7497"
+  },
+  {
+    "id": "SYN-CUST-1046",
+    "name": "Olivia Rossi",
+    "country": "Sweden",
+    "city": "Stockholm",
+    "order_status": "Shipped",
+    "phone": "+45-756-8866",
+    "address": "381 High St, Stockholm",
+    "gps": "48.4266, 19.1236"
+  },
+  {
+    "id": "SYN-CUST-1047",
+    "name": "Olivia Müller",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Delivered",
+    "phone": "+30-416-2438",
+    "address": "949 Church Rd, Madrid",
+    "gps": "44.4939, -1.3299"
+  },
+  {
+    "id": "SYN-CUST-1048",
+    "name": "Alex Russo",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Shipped",
+    "phone": "+46-789-2410",
+    "address": "423 Main St, Rome",
+    "gps": "48.9333, 1.3710"
+  },
+  {
+    "id": "SYN-CUST-1049",
+    "name": "Lucas Williams",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "order_status": "Cancelled",
+    "phone": "+32-254-4883",
+    "address": "977 Church Rd, Copenhagen",
+    "gps": "40.4056, 6.7180"
+  },
+  {
+    "id": "SYN-CUST-1050",
+    "name": "Hans Rossi",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Shipped",
+    "phone": "+46-217-4166",
+    "address": "197 Church Rd, Berlin",
+    "gps": "54.6386, 9.8049"
+  },
+  {
+    "id": "SYN-CUST-1051",
+    "name": "Elena Jensen",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Cancelled",
+    "phone": "+36-999-6449",
+    "address": "560 Park Ave, Madrid",
+    "gps": "56.8797, -4.4445"
+  },
+  {
+    "id": "SYN-CUST-1052",
+    "name": "Noah Russo",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Delivered",
+    "phone": "+43-806-6407",
+    "address": "729 Park Ave, Berlin",
+    "gps": "54.2369, 10.8907"
+  },
+  {
+    "id": "SYN-CUST-1053",
+    "name": "Anna Davies",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Delivered",
+    "phone": "+38-194-3130",
+    "address": "560 Park Ave, Rome",
+    "gps": "47.0446, -8.3775"
+  },
+  {
+    "id": "SYN-CUST-1054",
+    "name": "Maria Nielsen",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Delivered",
+    "phone": "+49-435-7445",
+    "address": "857 Park Ave, London",
+    "gps": "53.1735, 17.9482"
+  },
+  {
+    "id": "SYN-CUST-1055",
+    "name": "Elena Davies",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Shipped",
+    "phone": "+49-824-1405",
+    "address": "135 Church Rd, London",
+    "gps": "55.7249, 0.1031"
+  },
+  {
+    "id": "SYN-CUST-1056",
+    "name": "Amelia García",
+    "country": "Sweden",
+    "city": "Stockholm",
+    "order_status": "Shipped",
+    "phone": "+37-386-6513",
+    "address": "403 Main St, Stockholm",
+    "gps": "45.2702, 9.0645"
+  },
+  {
+    "id": "SYN-CUST-1057",
+    "name": "Jean Dubois",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Processing",
+    "phone": "+49-636-5573",
+    "address": "688 Church Rd, Paris",
+    "gps": "46.4267, -7.3938"
+  },
+  {
+    "id": "SYN-CUST-1058",
+    "name": "Noah Williams",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Shipped",
+    "phone": "+34-824-6357",
+    "address": "947 Church Rd, Rome",
+    "gps": "52.9816, 2.5141"
+  },
+  {
+    "id": "SYN-CUST-1059",
+    "name": "Amelia Davies",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Cancelled",
+    "phone": "+47-318-3999",
+    "address": "250 Park Ave, Paris",
+    "gps": "49.9149, -5.0235"
+  },
+  {
+    "id": "SYN-CUST-1060",
+    "name": "Liam Müller",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "order_status": "Processing",
+    "phone": "+30-666-4307",
+    "address": "625 Church Rd, Amsterdam",
+    "gps": "48.8791, 13.0505"
+  },
+  {
+    "id": "SYN-CUST-1061",
+    "name": "Maria Brown",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "order_status": "Delivered",
+    "phone": "+34-821-2693",
+    "address": "189 Main St, Amsterdam",
+    "gps": "46.0816, 10.5266"
+  },
+  {
+    "id": "SYN-CUST-1062",
+    "name": "Liam Jones",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Cancelled",
+    "phone": "+49-765-4572",
+    "address": "789 Church Rd, Paris",
+    "gps": "44.4991, -5.0141"
+  },
+  {
+    "id": "SYN-CUST-1063",
+    "name": "Hans Schmidt",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Cancelled",
+    "phone": "+31-869-9741",
+    "address": "189 Main St, Rome",
+    "gps": "57.7637, 9.2449"
+  },
+  {
+    "id": "SYN-CUST-1064",
+    "name": "Olivia Smith",
+    "country": "Sweden",
+    "city": "Stockholm",
+    "order_status": "Processing",
+    "phone": "+37-930-6424",
+    "address": "29 Church Rd, Stockholm",
+    "gps": "55.3696, -9.5766"
+  },
+  {
+    "id": "SYN-CUST-1065",
+    "name": "Elias Lefebvre",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Shipped",
+    "phone": "+38-977-8777",
+    "address": "439 High St, Berlin",
+    "gps": "48.5138, -9.7983"
+  },
+  {
+    "id": "SYN-CUST-1066",
+    "name": "Noah Müller",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Shipped",
+    "phone": "+37-413-6080",
+    "address": "217 High St, Berlin",
+    "gps": "48.5330, 10.3718"
+  },
+  {
+    "id": "SYN-CUST-1067",
+    "name": "Maria Davies",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Shipped",
+    "phone": "+43-515-2267",
+    "address": "333 Park Ave, Berlin",
+    "gps": "43.1754, 15.6293"
+  },
+  {
+    "id": "SYN-CUST-1068",
+    "name": "Lucas Davies",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Processing",
+    "phone": "+42-445-8691",
+    "address": "53 Church Rd, Madrid",
+    "gps": "51.7715, 6.6648"
+  },
+  {
+    "id": "SYN-CUST-1069",
+    "name": "Anna Dubois",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Shipped",
+    "phone": "+43-685-2766",
+    "address": "809 Church Rd, Rome",
+    "gps": "59.3777, 5.5015"
+  },
+  {
+    "id": "SYN-CUST-1070",
+    "name": "Noah Nielsen",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Cancelled",
+    "phone": "+32-780-9099",
+    "address": "582 Park Ave, Rome",
+    "gps": "53.6517, 12.9090"
+  },
+  {
+    "id": "SYN-CUST-1071",
+    "name": "Alex Jones",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Processing",
+    "phone": "+38-228-6881",
+    "address": "742 Church Rd, Rome",
+    "gps": "48.9013, 13.8066"
+  },
+  {
+    "id": "SYN-CUST-1072",
+    "name": "Mia Davies",
+    "country": "Sweden",
+    "city": "Stockholm",
+    "order_status": "Cancelled",
+    "phone": "+43-919-4367",
+    "address": "565 Church Rd, Stockholm",
+    "gps": "50.9587, 16.5022"
+  },
+  {
+    "id": "SYN-CUST-1073",
+    "name": "Olivia Jensen",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Delivered",
+    "phone": "+47-712-5089",
+    "address": "731 High St, Berlin",
+    "gps": "48.2441, 11.1100"
+  },
+  {
+    "id": "SYN-CUST-1074",
+    "name": "Emma Russo",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Cancelled",
+    "phone": "+45-855-1930",
+    "address": "237 Main St, Rome",
+    "gps": "58.5830, -2.9334"
+  },
+  {
+    "id": "SYN-CUST-1075",
+    "name": "Elena Davies",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Cancelled",
+    "phone": "+35-924-9293",
+    "address": "978 Main St, Berlin",
+    "gps": "42.5714, -8.2901"
+  },
+  {
+    "id": "SYN-CUST-1076",
+    "name": "Hans Lefebvre",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Cancelled",
+    "phone": "+39-841-1365",
+    "address": "931 Church Rd, Paris",
+    "gps": "40.0843, -9.1699"
+  },
+  {
+    "id": "SYN-CUST-1077",
+    "name": "Anna Jones",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Cancelled",
+    "phone": "+47-991-3763",
+    "address": "497 Main St, Berlin",
+    "gps": "45.3130, -4.4707"
+  },
+  {
+    "id": "SYN-CUST-1078",
+    "name": "Sofia Evans",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Processing",
+    "phone": "+31-469-5626",
+    "address": "30 Park Ave, London",
+    "gps": "53.4119, 8.0589"
+  },
+  {
+    "id": "SYN-CUST-1079",
+    "name": "Anna Williams",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Delivered",
+    "phone": "+43-860-9750",
+    "address": "103 High St, London",
+    "gps": "44.0582, 6.8200"
+  },
+  {
+    "id": "SYN-CUST-1080",
+    "name": "Jean Jensen",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Shipped",
+    "phone": "+34-804-3199",
+    "address": "3 High St, Madrid",
+    "gps": "40.4744, -8.0305"
+  },
+  {
+    "id": "SYN-CUST-1081",
+    "name": "Maria Nielsen",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "order_status": "Processing",
+    "phone": "+47-704-4598",
+    "address": "784 Main St, Copenhagen",
+    "gps": "57.6444, 15.2005"
+  },
+  {
+    "id": "SYN-CUST-1082",
+    "name": "Maria Jensen",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "order_status": "Delivered",
+    "phone": "+35-287-7048",
+    "address": "92 Park Ave, Copenhagen",
+    "gps": "57.2297, 17.1975"
+  },
+  {
+    "id": "SYN-CUST-1083",
+    "name": "Liam Evans",
+    "country": "Sweden",
+    "city": "Stockholm",
+    "order_status": "Delivered",
+    "phone": "+39-558-2476",
+    "address": "317 Park Ave, Stockholm",
+    "gps": "49.7714, 13.4209"
+  },
+  {
+    "id": "SYN-CUST-1084",
+    "name": "Elias Müller",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Processing",
+    "phone": "+42-955-9799",
+    "address": "75 Main St, Paris",
+    "gps": "49.4600, 11.3145"
+  },
+  {
+    "id": "SYN-CUST-1085",
+    "name": "Olivia Brown",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Delivered",
+    "phone": "+41-931-2613",
+    "address": "481 Main St, London",
+    "gps": "41.4551, 9.8252"
+  },
+  {
+    "id": "SYN-CUST-1086",
+    "name": "Olivia García",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "order_status": "Delivered",
+    "phone": "+31-150-1215",
+    "address": "827 Park Ave, Copenhagen",
+    "gps": "54.6683, 14.3614"
+  },
+  {
+    "id": "SYN-CUST-1087",
+    "name": "Hans Jones",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Cancelled",
+    "phone": "+44-227-9724",
+    "address": "37 High St, Paris",
+    "gps": "56.1589, 17.9363"
+  },
+  {
+    "id": "SYN-CUST-1088",
+    "name": "Mia Martínez",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "order_status": "Processing",
+    "phone": "+47-811-8589",
+    "address": "678 High St, Amsterdam",
+    "gps": "45.3516, 18.7057"
+  },
+  {
+    "id": "SYN-CUST-1089",
+    "name": "Amelia Brown",
+    "country": "Italy",
+    "city": "Rome",
+    "order_status": "Cancelled",
+    "phone": "+44-988-2753",
+    "address": "256 Church Rd, Rome",
+    "gps": "44.0101, -0.2461"
+  },
+  {
+    "id": "SYN-CUST-1090",
+    "name": "Elias Lefebvre",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Delivered",
+    "phone": "+35-332-7187",
+    "address": "690 High St, Berlin",
+    "gps": "53.8534, 10.9522"
+  },
+  {
+    "id": "SYN-CUST-1091",
+    "name": "Alex Brown",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Cancelled",
+    "phone": "+45-408-3426",
+    "address": "227 Church Rd, Berlin",
+    "gps": "43.8115, 12.4088"
+  },
+  {
+    "id": "SYN-CUST-1092",
+    "name": "Liam Nielsen",
+    "country": "France",
+    "city": "Paris",
+    "order_status": "Processing",
+    "phone": "+38-540-3690",
+    "address": "789 Main St, Paris",
+    "gps": "50.5136, -4.8455"
+  },
+  {
+    "id": "SYN-CUST-1093",
+    "name": "Anna Smith",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "order_status": "Processing",
+    "phone": "+43-819-2690",
+    "address": "472 Park Ave, Copenhagen",
+    "gps": "41.3971, 4.6459"
+  },
+  {
+    "id": "SYN-CUST-1094",
+    "name": "Anna Brown",
+    "country": "Sweden",
+    "city": "Stockholm",
+    "order_status": "Processing",
+    "phone": "+41-817-9637",
+    "address": "191 High St, Stockholm",
+    "gps": "51.8665, 4.6732"
+  },
+  {
+    "id": "SYN-CUST-1095",
+    "name": "Alex Jones",
+    "country": "Sweden",
+    "city": "Stockholm",
+    "order_status": "Cancelled",
+    "phone": "+44-892-5580",
+    "address": "435 Main St, Stockholm",
+    "gps": "58.5714, -0.5884"
+  },
+  {
+    "id": "SYN-CUST-1096",
+    "name": "Mia Evans",
+    "country": "Germany",
+    "city": "Berlin",
+    "order_status": "Shipped",
+    "phone": "+30-732-8745",
+    "address": "975 Main St, Berlin",
+    "gps": "52.9093, 13.2184"
+  },
+  {
+    "id": "SYN-CUST-1097",
+    "name": "Emma Jensen",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "order_status": "Delivered",
+    "phone": "+40-304-5411",
+    "address": "68 Park Ave, Copenhagen",
+    "gps": "55.0315, 11.2534"
+  },
+  {
+    "id": "SYN-CUST-1098",
+    "name": "Amelia Rossi",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Processing",
+    "phone": "+33-690-8505",
+    "address": "4 High St, Madrid",
+    "gps": "43.0027, -0.2631"
+  },
+  {
+    "id": "SYN-CUST-1099",
+    "name": "Lucas Smith",
+    "country": "UK",
+    "city": "London",
+    "order_status": "Processing",
+    "phone": "+44-811-6087",
+    "address": "658 Park Ave, London",
+    "gps": "49.5954, 9.6935"
+  },
+  {
+    "id": "SYN-CUST-1100",
+    "name": "Elias Schmidt",
+    "country": "Spain",
+    "city": "Madrid",
+    "order_status": "Shipped",
+    "phone": "+36-993-2345",
+    "address": "828 Park Ave, Madrid",
+    "gps": "51.4270, -2.2731"
+  }
+]
