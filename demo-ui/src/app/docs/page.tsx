@@ -60,7 +60,7 @@ const architectureVertical = `flowchart TD
     A2 -->|2. A2A Request| A1
     A1 -->|3. Query Data| DB
     DB -->|4. Return Synthetic Record| A1
-    A1 -->|"5. A2A Response<br/>(Refusal / Disclosure)"| A2
+    A1 -->|5. A2A Response| A2
     A2 -->|6. Deliver Answer| U
 
     A2 -.->|Observes Telemetry| GB

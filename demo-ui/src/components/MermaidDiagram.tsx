@@ -42,10 +42,10 @@ export default function MermaidDiagram({ chart }: MermaidDiagramProps) {
     });
 
     let isMounted = true;
-    setRenderError(null);
 
     const renderChart = async () => {
       try {
+        setRenderError(null);
         const id = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
         const { svg: renderedSvg } = await mermaid.render(id, chart);
         if (isMounted) {
@@ -54,10 +54,11 @@ export default function MermaidDiagram({ chart }: MermaidDiagramProps) {
             .replace(/style="max-width:\s*[^"]*"/gi, 'style="width: 100%; height: auto; min-height: 260px;"');
           setSvg(responsiveSvg);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Mermaid render error:', err);
         if (isMounted) {
-          setRenderError(err?.message || 'Diagram parsing error');
+          const errMsg = err instanceof Error ? err.message : 'Diagram parsing error';
+          setRenderError(errMsg);
         }
       }
     };
