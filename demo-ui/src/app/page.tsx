@@ -3,25 +3,28 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Database, 
-  Send, 
-  Plus, 
-  User, 
-  Bot, 
-  Trash2, 
-  MessageSquare, 
-  Pencil, 
-  Check, 
+import {
+  Database,
+  Send,
+  Plus,
+  User,
+  Bot,
+  Trash2,
+  MessageSquare,
+  Pencil,
+  Check,
   Sparkles,
   ArrowRight,
   Activity,
   ChevronRight,
   X,
-  FileText
+  FileText,
+  Download,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { downloadChatPdf } from '@/lib/pdf-exporter';
 
 type LogType = {
   id: string;
@@ -60,6 +63,9 @@ export default function Home() {
   // Renaming state
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+
+  // Individual Chat PDF Export state
+  const [downloadingSessionId, setDownloadingSessionId] = useState<string | null>(null);
 
   // Agent 1 Accuracy metric state (single source of truth: backend /api/agent-accuracy)
   const [agent1Accuracy, setAgent1Accuracy] = useState<string | null>(null);
@@ -165,12 +171,24 @@ export default function Home() {
     return newId;
   };
 
-  const deleteSession = (e: React.MouseEvent, id: string) => {
+  const deleteSession = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
     e.stopPropagation();
+
+    // 1. Delete from UI state and local storage immediately
     setSessions(prev => prev.filter(s => s.id !== id));
     if (currentSessionId === id) {
       const remaining = sessions.filter(s => s.id !== id);
       setCurrentSessionId(remaining.length > 0 ? remaining[0].id : null);
+    }
+
+    // 2. Delete from backend session store
+    try {
+      await fetch(`http://localhost:8000/api/simulations/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.warn(`Failed to delete session ${id} from backend:`, err);
     }
   };
 
@@ -185,6 +203,21 @@ export default function Home() {
     if (!editTitle.trim()) return;
     setSessions(prev => prev.map(s => s.id === editingSessionId ? { ...s, title: editTitle.trim() } : s));
     setEditingSessionId(null);
+  };
+
+  const handleDownloadChatPdf = async (e: React.MouseEvent, session: ChatSession) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (downloadingSessionId) return;
+
+    setDownloadingSessionId(session.id);
+    try {
+      await downloadChatPdf(session);
+    } catch (err) {
+      console.error('Failed to generate PDF:', err);
+    } finally {
+      setDownloadingSessionId(null);
+    }
   };
 
   const executeSimulation = async (queryText: string) => {
@@ -293,10 +326,10 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-[#070c1a] text-slate-100 antialiased font-sans overflow-hidden">
-      
+
       {/* 1. Left Sidebar: Sessions Navigation */}
       <aside className="w-64 bg-[#090f22] border-r border-slate-800/80 flex flex-col p-4 shrink-0 select-none">
-        
+
         {/* Brand & New Chat */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
@@ -309,7 +342,7 @@ export default function Home() {
           </div>
         </div>
 
-        <Button 
+        <Button
           onClick={() => createNewSession()}
           className="w-full bg-[#0d162e] hover:bg-blue-600/20 text-blue-300 hover:text-blue-200 border border-blue-500/30 text-xs font-medium py-2 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all mb-4"
         >
@@ -328,14 +361,13 @@ export default function Home() {
             </div>
           ) : (
             sessions.map((session) => (
-              <div 
+              <div
                 key={session.id}
                 onClick={() => setCurrentSessionId(session.id)}
-                className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer transition-all border ${
-                  session.id === currentSessionId 
-                    ? 'bg-[#121c38] text-blue-300 border-blue-500/40 shadow-sm' 
-                    : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200 border-transparent'
-                }`}
+                className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer transition-all border ${session.id === currentSessionId
+                  ? 'bg-[#121c38] text-blue-300 border-blue-500/40 shadow-sm'
+                  : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200 border-transparent'
+                  }`}
               >
                 {editingSessionId === session.id ? (
                   <div className="flex items-center gap-1.5 w-full">
@@ -361,14 +393,26 @@ export default function Home() {
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={(e) => startEditing(e, session)}
-                        className="p-1 text-slate-500 hover:text-blue-400"
+                        className="p-1 text-slate-500 hover:text-blue-400 transition-colors"
                         title="Rename"
                       >
                         <Pencil className="w-3 h-3" />
                       </button>
                       <button
+                        onClick={(e) => handleDownloadChatPdf(e, session)}
+                        disabled={downloadingSessionId === session.id}
+                        className="p-1 text-slate-500 hover:text-blue-400 transition-colors disabled:opacity-50"
+                        title="Download Chat (PDF)"
+                      >
+                        {downloadingSessionId === session.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
+                        ) : (
+                          <Download className="w-3 h-3" />
+                        )}
+                      </button>
+                      <button
                         onClick={(e) => deleteSession(e, session.id)}
-                        className="p-1 text-slate-500 hover:text-red-400"
+                        className="p-1 text-slate-500 hover:text-red-400 transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -393,7 +437,7 @@ export default function Home() {
 
       {/* 2. Main Work Area */}
       <main className="flex-1 flex flex-col min-w-0 h-full p-5 overflow-hidden">
-        
+
         {/* Top Header Bar */}
         <header className="flex items-center justify-between mb-4 shrink-0 pb-3 border-b border-slate-800/70">
           <div className="flex items-center gap-2.5">
@@ -407,7 +451,7 @@ export default function Home() {
               </span>
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Link
               href="/docs"
@@ -422,11 +466,10 @@ export default function Home() {
               onClick={() => setIsActivityOpen(!isActivityOpen)}
               variant="outline"
               size="sm"
-              className={`h-8 border text-xs gap-1.5 rounded-lg transition-all ${
-                isActivityOpen 
-                  ? 'bg-blue-950/60 text-blue-300 border-blue-700/60' 
-                  : 'bg-[#0a1126] text-slate-300 border-slate-800 hover:bg-slate-800/60'
-              }`}
+              className={`h-8 border text-xs gap-1.5 rounded-lg transition-all ${isActivityOpen
+                ? 'bg-blue-950/60 text-blue-300 border-blue-700/60'
+                : 'bg-[#0a1126] text-slate-300 border-slate-800 hover:bg-slate-800/60'
+                }`}
             >
               <Activity className="w-3.5 h-3.5 text-blue-400" />
               <span>A2A Flow</span>
@@ -440,30 +483,27 @@ export default function Home() {
         {/* Top Section: Agent Nodes Communication Banner */}
         <section className="bg-gradient-to-r from-[#060c1d] via-[#091128] to-[#0e0a22] border border-slate-800/80 rounded-2xl p-3 sm:p-3.5 mb-4 shrink-0 shadow-md">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-3 sm:gap-4 w-full">
-            
+
             {/* Left Node: Agent 2 (India) */}
-            <div className={`flex items-center gap-3 bg-[#060b18] border transition-all duration-300 rounded-xl px-3.5 py-2.5 w-full lg:w-auto min-w-[225px] ${
-              flowStage === 'requesting' || flowStage === 'received' 
-                ? 'border-blue-500 shadow-[0_0_18px_rgba(59,130,246,0.3)] bg-blue-950/30' 
-                : 'border-slate-800 hover:border-slate-700'
-            }`}>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-                flowStage === 'requesting' || flowStage === 'received'
-                  ? 'bg-blue-600/30 border border-blue-500 text-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.4)]'
-                  : 'bg-blue-950/70 border border-blue-800/60 text-blue-400'
+            <div className={`flex items-center gap-3 bg-[#060b18] border transition-all duration-300 rounded-xl px-3.5 py-2.5 w-full lg:w-auto min-w-[225px] ${flowStage === 'requesting' || flowStage === 'received'
+              ? 'border-blue-500 shadow-[0_0_18px_rgba(59,130,246,0.3)] bg-blue-950/30'
+              : 'border-slate-800 hover:border-slate-700'
               }`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${flowStage === 'requesting' || flowStage === 'received'
+                ? 'bg-blue-600/30 border border-blue-500 text-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.4)]'
+                : 'bg-blue-950/70 border border-blue-800/60 text-blue-400'
+                }`}>
                 <Bot className="w-5 h-5" />
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-semibold text-slate-100 truncate">Agent 2 • India Node</span>
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${
-                    flowStage === 'requesting' || flowStage === 'received' 
-                      ? 'bg-blue-400 animate-ping' 
-                      : flowStage === 'completed'
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${flowStage === 'requesting' || flowStage === 'received'
+                    ? 'bg-blue-400 animate-ping'
+                    : flowStage === 'completed'
                       ? 'bg-emerald-400'
                       : 'bg-blue-400/80'
-                  }`} />
+                    }`} />
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="text-[10px] text-slate-400">Requesting Agent</span>
@@ -490,11 +530,10 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-                <Badge variant="outline" className={`text-[9px] px-2 py-0 border transition-all shrink-0 ${
-                  flowStage === 'requesting' 
-                    ? 'bg-blue-950 text-blue-200 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)] animate-pulse' 
-                    : 'bg-[#060b18] text-slate-400 border-slate-800'
-                }`}>
+                <Badge variant="outline" className={`text-[9px] px-2 py-0 border transition-all shrink-0 ${flowStage === 'requesting'
+                  ? 'bg-blue-950 text-blue-200 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)] animate-pulse'
+                  : 'bg-[#060b18] text-slate-400 border-slate-800'
+                  }`}>
                   {flowStage === 'requesting' ? 'IN → EU • Sending' : 'IN → EU'}
                 </Badge>
               </div>
@@ -516,41 +555,37 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-                <Badge variant="outline" className={`text-[9px] px-2 py-0 border transition-all shrink-0 ${
-                  flowStage === 'received' 
-                    ? 'bg-purple-950 text-emerald-300 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] animate-pulse'
-                    : flowStage === 'processing'
+                <Badge variant="outline" className={`text-[9px] px-2 py-0 border transition-all shrink-0 ${flowStage === 'received'
+                  ? 'bg-purple-950 text-emerald-300 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] animate-pulse'
+                  : flowStage === 'processing'
                     ? 'bg-purple-950 text-purple-200 border-purple-500 animate-pulse'
                     : 'bg-[#060b18] text-slate-400 border-slate-800'
-                }`}>
+                  }`}>
                   {flowStage === 'received' ? 'EU → IN • Delivered' : flowStage === 'processing' ? 'EU • Querying DB' : 'EU → IN'}
                 </Badge>
               </div>
             </div>
 
             {/* Right Node: Agent 1 (Europe) */}
-            <div className={`flex items-center gap-3 bg-[#060b18] border transition-all duration-300 rounded-xl px-3.5 py-2.5 w-full lg:w-auto min-w-[225px] ${
-              flowStage === 'processing' 
-                ? 'border-purple-500 shadow-[0_0_18px_rgba(168,85,247,0.3)] bg-purple-950/30' 
-                : 'border-slate-800 hover:border-slate-700'
-            }`}>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-                flowStage === 'processing'
-                  ? 'bg-purple-600/30 border border-purple-500 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.4)]'
-                  : 'bg-purple-950/70 border border-purple-800/60 text-purple-400'
+            <div className={`flex items-center gap-3 bg-[#060b18] border transition-all duration-300 rounded-xl px-3.5 py-2.5 w-full lg:w-auto min-w-[225px] ${flowStage === 'processing'
+              ? 'border-purple-500 shadow-[0_0_18px_rgba(168,85,247,0.3)] bg-purple-950/30'
+              : 'border-slate-800 hover:border-slate-700'
               }`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${flowStage === 'processing'
+                ? 'bg-purple-600/30 border border-purple-500 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.4)]'
+                : 'bg-purple-950/70 border border-purple-800/60 text-purple-400'
+                }`}>
                 <Database className="w-5 h-5" />
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-semibold text-slate-100 truncate">Agent 1 • Europe Node</span>
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${
-                    flowStage === 'processing' 
-                      ? 'bg-purple-400 animate-ping' 
-                      : flowStage === 'completed'
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${flowStage === 'processing'
+                    ? 'bg-purple-400 animate-ping'
+                    : flowStage === 'completed'
                       ? 'bg-emerald-400'
                       : 'bg-purple-400/80'
-                  }`} />
+                    }`} />
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="text-[10px] text-slate-400">Data Provider</span>
@@ -571,13 +606,13 @@ export default function Home() {
 
         {/* Main Content Workspace: Chat + Collapsible A2A Activity Panel */}
         <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">
-          
+
           {/* Conversational AI Chat Window */}
           <div className="flex-1 bg-[#091124] border border-slate-800/90 rounded-2xl flex flex-col overflow-hidden shadow-sm">
-            
+
             {/* Scrollable Conversation Stream */}
             <div className="flex-1 overflow-y-auto p-5 scroll-smooth space-y-4" ref={chatScrollRef}>
-              
+
               {currentLogs.length === 0 ? (
                 /* Empty Chat Greeting State */
                 <div className="h-full flex flex-col items-center justify-center text-center p-6 my-auto">
@@ -590,7 +625,7 @@ export default function Home() {
                   <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
                     I am Agent 2 in South India. I formulate your request and coordinate with Agent 1 in North Europe to answer your questions accurately.
                   </p>
-                  
+
                   {/* Preset Prompt Pills */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-2xl w-full">
                     {quickPrompts.map((promptText, idx) => (
@@ -629,7 +664,7 @@ export default function Home() {
                       <div className="w-8 h-8 rounded-full bg-blue-950/80 border border-blue-700/80 flex items-center justify-center shrink-0 text-blue-400 shadow-sm mt-0.5">
                         <Bot className="w-4 h-4" />
                       </div>
-                      
+
                       <div className="space-y-1.5 max-w-2xl w-full">
                         <div className="flex items-center gap-2">
                           <span className="text-[11px] font-semibold text-blue-400">Agent 2 (India)</span>
@@ -658,8 +693,8 @@ export default function Home() {
                       <span className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" />
                     </div>
                     <span>
-                      {activeNode === 'agent1' 
-                        ? "Agent 1 (Europe) processing query..." 
+                      {activeNode === 'agent1'
+                        ? "Agent 1 (Europe) processing query..."
                         : "Agent 2 coordinating cross-border request..."}
                     </span>
                   </div>
@@ -677,9 +712,9 @@ export default function Home() {
                   className="flex-1 bg-[#091124] border-slate-800 text-slate-100 text-xs placeholder:text-slate-500 focus-visible:ring-blue-500/40 rounded-xl h-10 px-3.5"
                   disabled={isProcessing}
                 />
-                <Button 
-                  type="submit" 
-                  disabled={isProcessing || !inputText.trim()} 
+                <Button
+                  type="submit"
+                  disabled={isProcessing || !inputText.trim()}
                   className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl h-10 w-10 p-0 flex items-center justify-center shrink-0 shadow-sm transition-colors disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
@@ -692,7 +727,7 @@ export default function Home() {
           {/* Minimal 3-Step Collapsible A2A Activity Panel */}
           {isActivityOpen && (
             <div className="w-[320px] lg:w-[350px] shrink-0 bg-[#091124] border border-slate-800/90 rounded-2xl flex flex-col overflow-hidden shadow-sm transition-all">
-              
+
               {/* Activity Header */}
               <div className="px-4 py-3 border-b border-slate-800/80 bg-[#070e20] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
@@ -703,7 +738,7 @@ export default function Home() {
                   <Badge variant="outline" className="bg-blue-950/60 border-blue-800 text-blue-300 text-[10px] px-1.5 py-0.2 font-mono">
                     3 Hops
                   </Badge>
-                  <button 
+                  <button
                     onClick={() => setIsActivityOpen(false)}
                     className="text-slate-500 hover:text-slate-300 p-1 transition-colors"
                     title="Close Panel"
@@ -725,30 +760,27 @@ export default function Home() {
                   const isEmerald = step.color === 'emerald';
 
                   return (
-                    <div 
-                      key={idx} 
-                      className={`p-3.5 rounded-xl border transition-all ${
-                        isBlue ? 'bg-[#070d1d] border-blue-900/50' :
+                    <div
+                      key={idx}
+                      className={`p-3.5 rounded-xl border transition-all ${isBlue ? 'bg-[#070d1d] border-blue-900/50' :
                         isPurple ? 'bg-[#0b0a1d] border-purple-900/50' :
-                        'bg-[#06121a] border-emerald-900/50'
-                      }`}
+                          'bg-[#06121a] border-emerald-900/50'
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${
-                            isBlue ? 'bg-blue-400' :
+                          <span className={`w-2 h-2 rounded-full ${isBlue ? 'bg-blue-400' :
                             isPurple ? 'bg-purple-400' :
-                            'bg-emerald-400'
-                          }`} />
+                              'bg-emerald-400'
+                            }`} />
                           <span className="text-xs font-semibold text-slate-200">
                             {step.title}
                           </span>
                         </div>
-                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
-                          isBlue ? 'bg-blue-950 text-blue-300 border-blue-800' :
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${isBlue ? 'bg-blue-950 text-blue-300 border-blue-800' :
                           isPurple ? 'bg-purple-950 text-purple-300 border-purple-800' :
-                          'bg-emerald-950 text-emerald-300 border-emerald-800'
-                        }`}>
+                            'bg-emerald-950 text-emerald-300 border-emerald-800'
+                          }`}>
                           {step.badge}
                         </span>
                       </div>
@@ -811,7 +843,7 @@ function FormattedMessage({ text }: { text: string }) {
     if (tableLines.length >= 2) {
       const headerCols = tableLines[0].split('|').slice(1, -1).map(c => c.trim());
       // Skip line index 1 (table divider like |---|---|)
-      const dataRows = tableLines.slice(2).map(row => 
+      const dataRows = tableLines.slice(2).map(row =>
         row.split('|').slice(1, -1).map(c => c.trim())
       );
 
@@ -842,12 +874,11 @@ function FormattedMessage({ text }: { text: string }) {
                       if (isDelivered || isShipped || isProcessing || isCancelled) {
                         return (
                           <td key={cIdx} className="px-3.5 py-2">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                              isDelivered ? 'bg-emerald-950/70 text-emerald-300 border-emerald-800' :
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${isDelivered ? 'bg-emerald-950/70 text-emerald-300 border-emerald-800' :
                               isShipped ? 'bg-blue-950/70 text-blue-300 border-blue-800' :
-                              isProcessing ? 'bg-amber-950/70 text-amber-300 border-amber-800' :
-                              'bg-rose-950/40 text-rose-300 border-rose-900/50'
-                            }`}>
+                                isProcessing ? 'bg-amber-950/70 text-amber-300 border-amber-800' :
+                                  'bg-rose-950/40 text-rose-300 border-rose-900/50'
+                              }`}>
                               {cell}
                             </span>
                           </td>
@@ -875,11 +906,11 @@ function FormattedMessage({ text }: { text: string }) {
   // Otherwise render formatted text (bold, bullet points, clean spacing)
   const rawLines = text.split('\n');
   const items: { type: 'bullet' | 'paragraph'; text: string }[] = [];
-  
+
   for (let i = 0; i < rawLines.length; i++) {
     const trimmed = rawLines[i].trim();
     if (!trimmed) continue;
-    
+
     if (trimmed === '•' || trimmed === '-') {
       // Detached bullet: merge with next non-empty line
       if (i + 1 < rawLines.length && rawLines[i + 1].trim()) {
