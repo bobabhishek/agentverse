@@ -28,6 +28,13 @@ async def get_agent_accuracy():
 # In-memory session store for tracking active simulations
 simulation_sessions: Dict[str, Dict[str, Any]] = {}
 
+@router.get("/api/simulations")
+async def list_simulations():
+    return {
+        "total_sessions": len(simulation_sessions),
+        "sessions": simulation_sessions
+    }
+
 @router.post("/api/simulations")
 async def create_simulation():
     session_id = str(uuid.uuid4())
