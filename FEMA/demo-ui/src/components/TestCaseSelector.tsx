@@ -75,7 +75,7 @@ export const TestCaseSelector: React.FC<TestCaseSelectorProps> = ({
   const failureCount = selectedTestCase.policy_violations.length;
 
   return (
-    <div className="rounded-2xl border border-slate-800/90 bg-[#060b18] p-4 sm:p-5 shadow-sm" ref={dropdownRef}>
+    <div className="rounded-2xl border border-white/[0.08] bg-black/45 backdrop-blur-md p-4 sm:p-5 shadow-sm" ref={dropdownRef}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3.5">
         <span className="text-[11px] font-mono tracking-[0.18em] text-slate-300 uppercase font-semibold">
@@ -101,8 +101,8 @@ export const TestCaseSelector: React.FC<TestCaseSelectorProps> = ({
           }}
           className={`px-3 py-1 rounded-full transition-colors cursor-pointer border ${
             filterMode === 'all'
-              ? 'bg-[#121c38] text-blue-300 border-blue-500/40 shadow-sm'
-              : 'bg-[#091124] text-slate-400 border-slate-800 hover:text-slate-200'
+              ? 'bg-white/[0.10] text-blue-300 border-blue-500/40 shadow-xs'
+              : 'bg-black/40 text-slate-400 border-white/[0.08] hover:text-slate-200 hover:bg-white/[0.05]'
           }`}
         >
           All {testCases.length}
@@ -118,8 +118,8 @@ export const TestCaseSelector: React.FC<TestCaseSelectorProps> = ({
           }}
           className={`px-3 py-1 rounded-full transition-colors cursor-pointer border ${
             filterMode === 'failures'
-              ? 'bg-[#121c38] text-blue-300 border-blue-500/40 shadow-sm'
-              : 'bg-[#091124] text-slate-400 border-slate-800 hover:text-slate-200'
+              ? 'bg-white/[0.10] text-blue-300 border-blue-500/40 shadow-xs'
+              : 'bg-black/40 text-slate-400 border-white/[0.08] hover:text-slate-200 hover:bg-white/[0.05]'
           }`}
         >
           Policy failures {failureCases.length}
@@ -135,8 +135,8 @@ export const TestCaseSelector: React.FC<TestCaseSelectorProps> = ({
           }}
           className={`px-3 py-1 rounded-full transition-colors cursor-pointer border ${
             filterMode === 'valid'
-              ? 'bg-[#121c38] text-blue-300 border-blue-500/40 shadow-sm'
-              : 'bg-[#091124] text-slate-400 border-slate-800 hover:text-slate-200'
+              ? 'bg-white/[0.10] text-blue-300 border-blue-500/40 shadow-xs'
+              : 'bg-black/40 text-slate-400 border-white/[0.08] hover:text-slate-200 hover:bg-white/[0.05]'
           }`}
         >
           Valid-looking {validCases.length}
@@ -148,14 +148,14 @@ export const TestCaseSelector: React.FC<TestCaseSelectorProps> = ({
         <button
           onClick={handlePrev}
           title="Previous test case"
-          className="w-8 h-9 rounded-xl bg-[#091124] border border-slate-800 hover:bg-[#0f1b38] hover:border-slate-700 text-slate-300 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          className="w-8 h-9 rounded-xl bg-black/40 border border-white/[0.08] hover:bg-white/[0.08] hover:border-blue-500/40 text-slate-300 flex items-center justify-center transition-colors cursor-pointer shrink-0 backdrop-blur-xs"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
 
         <button
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="flex-1 h-9 px-3 rounded-xl bg-[#091124] border border-slate-800 hover:border-blue-500/40 text-left flex items-center justify-between text-xs font-mono transition-colors cursor-pointer truncate"
+          className="flex-1 h-9 px-3 rounded-xl bg-black/40 border border-white/[0.08] hover:border-blue-500/40 text-left flex items-center justify-between text-xs font-mono transition-colors cursor-pointer truncate backdrop-blur-xs"
         >
           <span className="truncate text-slate-200">
             <strong className="text-white">
@@ -170,14 +170,14 @@ export const TestCaseSelector: React.FC<TestCaseSelectorProps> = ({
         <button
           onClick={handleNext}
           title="Next test case"
-          className="w-8 h-9 rounded-xl bg-[#091124] border border-slate-800 hover:bg-[#0f1b38] hover:border-slate-700 text-slate-300 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          className="w-8 h-9 rounded-xl bg-black/40 border border-white/[0.08] hover:bg-white/[0.08] hover:border-blue-500/40 text-slate-300 flex items-center justify-center transition-colors cursor-pointer shrink-0 backdrop-blur-xs"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
 
         {/* Dropdown Menu */}
         {dropdownOpen && (
-          <div className="absolute top-11 left-0 right-0 z-50 bg-[#091124] border border-slate-800 rounded-2xl shadow-2xl p-2 max-h-72 flex flex-col font-mono text-xs">
+          <div className="absolute top-11 left-0 right-0 z-50 bg-black/85 backdrop-blur-2xl border border-white/[0.12] rounded-2xl shadow-2xl p-2 max-h-72 flex flex-col font-mono text-xs">
             {/* Search Input */}
             <div className="relative mb-2 shrink-0">
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
@@ -186,7 +186,7 @@ export const TestCaseSelector: React.FC<TestCaseSelectorProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search test case or purpose..."
-                className="w-full bg-[#060b18] border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/60"
+                className="w-full bg-black/50 border border-white/[0.08] rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/60"
                 autoFocus
               />
             </div>
@@ -210,8 +210,8 @@ export const TestCaseSelector: React.FC<TestCaseSelectorProps> = ({
                       }}
                       className={`p-2 rounded-xl flex items-center justify-between cursor-pointer transition-colors ${
                         isSelected
-                          ? 'bg-[#121c38] border border-blue-500/40 text-blue-200'
-                          : 'hover:bg-slate-800/40 text-slate-300'
+                          ? 'bg-white/[0.10] border border-blue-500/40 text-blue-200'
+                          : 'hover:bg-white/[0.05] text-slate-300'
                       }`}
                     >
                       <div className="truncate">

@@ -66,7 +66,9 @@ Parameters:
 
 ### 4. Start Backend Server
 ```bash
-.\.venv\Scripts\uvicorn.exe app.main:app --reload --host 127.0.0.1 --port 8000
+python run.py
+# Or directly via uvicorn with reload exclusions:
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload --reload-dir app --reload-exclude "*.db*" --reload-exclude "*data*"
 ```
 
 ### 5. Verify Health Endpoint

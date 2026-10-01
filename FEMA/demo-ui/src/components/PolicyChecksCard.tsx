@@ -62,7 +62,7 @@ export const PolicyChecksCard: React.FC<PolicyChecksCardProps> = ({
   ];
 
   return (
-    <div className="rounded-2xl border border-slate-800/90 bg-[#060b18] p-4 sm:p-5 shadow-sm">
+    <div className="rounded-2xl border border-white/[0.08] bg-black/45 backdrop-blur-md p-4 sm:p-5 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-3.5">
         <span className="text-[11px] font-mono tracking-[0.18em] text-slate-300 uppercase font-semibold">
@@ -80,9 +80,9 @@ export const PolicyChecksCard: React.FC<PolicyChecksCardProps> = ({
           return (
             <div
               key={check.id}
-              className={`p-2.5 rounded-xl border flex items-start gap-2.5 transition-colors ${
+              className={`p-2.5 rounded-xl border flex items-start gap-2.5 transition-colors backdrop-blur-xs ${
                 isPass
-                  ? 'bg-[#091124] border-slate-800 text-slate-200'
+                  ? 'bg-black/40 border-white/[0.08] text-slate-200'
                   : 'bg-amber-950/20 border-amber-500/30 text-amber-200 shadow-[0_0_10px_-2px_rgba(245,158,11,0.08)]'
               }`}
             >

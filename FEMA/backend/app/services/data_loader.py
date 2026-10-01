@@ -1,49 +1,78 @@
-import json
 import logging
-from pathlib import Path
 from typing import List, Dict, Any, Optional
-from app.config import settings
+from app.services.database import db_service
 
 logger = logging.getLogger("fema.data")
 
 class DataLoader:
+    """
+    Provides data access to the persistent SQLite database test cases and customer records.
+    """
+
     def __init__(self):
-        self._test_cases: List[Dict[str, Any]] = []
-        self._load()
-
-    def _load(self):
-        path = Path(settings.DATA_PATH)
-        if not path.is_file():
-            # Try alternate path relative to current file
-            alt_path = Path(__file__).resolve().parent.parent / "data" / "fema_synthetic_100_people.json"
-            if alt_path.is_file():
-                path = alt_path
-
-        if path.is_file():
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    self._test_cases = json.load(f)
-                logger.info(f"Loaded {len(self._test_cases)} synthetic FEMA test cases from {path}")
-            except Exception as e:
-                logger.error(f"Failed to load synthetic dataset from {path}: {e}")
-                self._test_cases = []
-        else:
-            logger.warning(f"Synthetic data file not found at {path}")
-            self._test_cases = []
+        self._db = db_service
 
     def get_all(self, status: str = "all") -> List[Dict[str, Any]]:
-        status_clean = status.lower().strip()
-        if status_clean in ("policy_failure", "failures", "failure"):
-            return [tc for tc in self._test_cases if len(tc.get("policy_violations", [])) > 0]
-        elif status_clean in ("valid", "compliant"):
-            return [tc for tc in self._test_cases if len(tc.get("policy_violations", [])) == 0]
-        return self._test_cases
+        return self._db.get_all_customers()
 
     def get_by_id(self, person_id: str) -> Optional[Dict[str, Any]]:
-        clean_id = person_id.strip().upper()
-        for tc in self._test_cases:
-            if tc.get("person_id", "").upper() == clean_id:
-                return tc
+        if not person_id:
+            return None
+        cust = self._db.get_customer(person_id)
+        if cust:
+            return cust
+        recip = self._db.get_recipient(person_id)
+        if recip:
+            d = dict(recip)
+            d["customer_id"] = recip["recipient_id"]
+            d["customer_name"] = recip["recipient_name"]
+            d["person_id"] = recip["recipient_id"]
+            d["name"] = recip["recipient_name"]
+            d["source_country"] = recip.get("recipient_country", "United States")
+            d["source_currency"] = "INR" if "india" in str(d["source_country"]).lower() else "USD"
+            d["sender_residency"] = d["source_country"]
+            return d
         return None
+
+    def find_customer(self, query: str) -> Optional[Dict[str, Any]]:
+        c = self._db.find_customer(query)
+        if c:
+            return c
+        r = self._db.find_recipient(query)
+        if r:
+            d = dict(r)
+            d["customer_id"] = r["recipient_id"]
+            d["customer_name"] = r["recipient_name"]
+            d["person_id"] = r["recipient_id"]
+            d["name"] = r["recipient_name"]
+            d["source_country"] = r.get("recipient_country", "United States")
+            d["source_currency"] = "INR" if "india" in str(d["source_country"]).lower() else "USD"
+            d["sender_residency"] = d["source_country"]
+            return d
+        return None
+
+    def find_by_recipient(self, query: str) -> Optional[Dict[str, Any]]:
+        # 1. Search recipients first
+        r = self._db.find_recipient(query)
+        if r:
+            return r
+        # 2. Search customers to support role reversal (customer receiving money)
+        c = self._db.find_customer(query)
+        if c:
+            country = c.get("source_country", "India")
+            curr = "INR" if "india" in country.lower() else "USD"
+            return {
+                "recipient_id": c["customer_id"],
+                "recipient_name": c["customer_name"],
+                "recipient_country": country,
+                "destination_country": country,
+                "destination_currency": curr,
+                "inr_balance": c.get("inr_balance", 100000.0),
+                "usd_balance": c.get("usd_balance", 10000.0)
+            }
+        return None
+
+    def find_person(self, query: str) -> Optional[Dict[str, Any]]:
+        return self._db.find_person(query)
 
 data_loader = DataLoader()

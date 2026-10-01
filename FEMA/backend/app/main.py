@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config import settings
-from app.routes import health, chat, simulation
+from app.routes import health, chat, simulation, ledger, database
 
 # Setup logging
 logging.basicConfig(
@@ -57,3 +57,5 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(health.router)
 app.include_router(chat.router)
 app.include_router(simulation.router)
+app.include_router(ledger.router)
+app.include_router(database.router)

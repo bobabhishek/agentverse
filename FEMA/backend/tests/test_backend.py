@@ -31,7 +31,7 @@ async def test_test_cases_listing():
         resp = await client.get("/api/test-cases?status=all")
         assert resp.status_code == 200
         all_cases = resp.json()
-        assert len(all_cases) == 100
+        assert len(all_cases) >= 100
 
         # Policy Failures
         resp_failures = await client.get("/api/test-cases?status=policy_failure")

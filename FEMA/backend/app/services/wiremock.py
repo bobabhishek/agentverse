@@ -24,7 +24,13 @@ async def execute_wiremock_transfer(
     Strictly simulation only; no real money or banking credentials ever move.
     """
     wiremock_base = settings.WIREMOCK_BASE_URL.strip() if settings.WIREMOCK_BASE_URL else ""
-    endpoint = f"{wiremock_base.rstrip('/')}/transfers/domestic" if wiremock_base else ""
+    if wiremock_base:
+        # Cross-border uses /transfers/international, domestic uses /transfers/domestic
+        is_cross_border = (source_country or "").lower().strip() != (destination_country or "").lower().strip()
+        path = "/transfers/international" if is_cross_border else "/transfers/domestic"
+        endpoint = f"{wiremock_base.rstrip('/')}{path}"
+    else:
+        endpoint = ""
 
     payload = {
         "transaction_id": transaction_id,
@@ -70,7 +76,12 @@ async def execute_wiremock_transfer(
                     except Exception:
                         raw = {"text": resp.text}
 
-                    payment_id = raw.get("payment_id") or raw.get("id") or f"PMT-WM-{uuid.uuid4().hex[:8].upper()}"
+                    payment_id = (
+                        raw.get("paymentID")
+                        or raw.get("payment_id")
+                        or raw.get("id")
+                        or f"PMT-WM-{uuid.uuid4().hex[:8].upper()}"
+                    )
                     status_str = raw.get("status", "Scheduled")
 
                     event_logger.create_event(

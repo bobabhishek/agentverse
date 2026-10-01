@@ -63,9 +63,13 @@ class ActivityEvent(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
-    person_id: Optional[str] = "TEST-PERSON-001"
+    person_id: Optional[str] = "CUST-0001"
     conversation_id: Optional[str] = None
     reverse_route: Optional[bool] = None
+    recipient_id: Optional[str] = None
+    recipient_name: Optional[str] = None
+    source_country: Optional[str] = None
+    destination_country: Optional[str] = None
 
 class ChatResponse(BaseModel):
     conversation_id: str
@@ -78,6 +82,8 @@ class ChatResponse(BaseModel):
     transaction: Dict[str, Any] = Field(default_factory=dict)
     transfer: Dict[str, Any] = Field(default_factory=dict)
     events: List[Dict[str, Any]] = Field(default_factory=list)
+    account_balances: Optional[Dict[str, Any]] = None
+    audit_trail: Optional[Dict[str, Any]] = None
 
 class SimulationRunRequest(BaseModel):
     person_id: str

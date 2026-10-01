@@ -11,11 +11,11 @@ class MockFXService:
     @staticmethod
     def calculate_fx(
         amount: float,
-        source_currency: str,
-        destination_currency: str
+        source_currency: str = "INR",
+        destination_currency: str = "USD"
     ) -> Dict[str, Any]:
-        src = source_currency.upper().strip()
-        dst = destination_currency.upper().strip()
+        src = (source_currency or "INR").upper().strip()
+        dst = (destination_currency or ("USD" if src == "INR" else "INR")).upper().strip()
 
         if src == "INR" and dst == "USD":
             fx_rate = FX_RATE_USD_INR
