@@ -11,8 +11,7 @@ interface AgentHeaderProps {
 
 export const AgentHeader: React.FC<AgentHeaderProps> = ({
   senderCountry,
-  onSelectSenderCountry,
-  activeSenderName
+  onSelectSenderCountry
 }) => {
   return (
     <div className="shrink-0 px-4 sm:px-6 py-2.5 border-b border-white/[0.08] bg-black/40 backdrop-blur-md flex flex-col lg:flex-row lg:items-center justify-between gap-3 select-none">
@@ -26,11 +25,6 @@ export const AgentHeader: React.FC<AgentHeaderProps> = ({
             <h1 className="text-sm font-semibold text-slate-100 tracking-tight leading-none">
               FEMA Payment Agent
             </h1>
-            {activeSenderName && (
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/[0.06] border border-white/[0.1] text-slate-300">
-                Sender: <strong className="text-white">{activeSenderName}</strong>
-              </span>
-            )}
           </div>
           <p className="text-[11px] text-slate-400 font-mono mt-0.5">
             Single autonomous rogue compliance agent · SQLite persistent ledger
