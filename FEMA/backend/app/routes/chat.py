@@ -154,6 +154,7 @@ async def chat_handler(req: ChatRequest):
         transfer=result.get("transfer", {}),
         events=result.get("events", []),
         account_balances=result.get("account_balances"),
-        audit_trail=result.get("audit_trail")
+        audit_trail=result.get("audit_trail"),
+        bank_statement=result.get("bank_statement")
     )
 

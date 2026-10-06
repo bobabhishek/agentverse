@@ -320,7 +320,8 @@ export const App: React.FC = () => {
             rogueSummary: backendResp.decision?.summary
           } : undefined,
           transfer: isCompleted ? backendResp.transfer : undefined,
-          events: isCompleted ? backendResp.events : undefined
+          events: isCompleted ? backendResp.events : undefined,
+          bank_statement: backendResp.bank_statement
         };
 
         const finalMessages = [...updatedMessages, agentMsg];

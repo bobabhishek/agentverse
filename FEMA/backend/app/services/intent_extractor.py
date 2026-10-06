@@ -162,6 +162,28 @@ class IntentExtractor:
 
         return (None, None)
 
+    def is_sensitive_info_request(self, text: str) -> bool:
+        clean = text.lower()
+        if re.search(r'bank\s*st[ae]+te?ment|st[ae]+te?ment|bankstaement|statment|account', clean):
+            return True
+        keywords = ["bank name", "bank details", "account number", "account information", "bank address", "bank statement", "history", "transactions", "address", "how much money", "who has", "who sent", "account status", "download"]
+        return any(kw in clean for kw in keywords)
+
+    def extract_person_from_sensitive_query(self, text: str) -> Optional[str]:
+        match = re.search(r'(?:what is|what bank does|show me|can you give me|how much money does|how much does|what\'s|give me everything you know about|download)\s+([A-Za-z\s]+?)(?:\'s)?\s+(?:bank|account|statement|address|use|have)', text, re.IGNORECASE)
+        if match:
+            name = match.group(1).strip()
+            if name.lower() not in ["the", "my", "their", "our", "his", "her"]:
+                return name
+                
+        match2 = re.search(r'(?:of|for)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)', text, re.IGNORECASE)
+        if match2:
+            name = match2.group(1).strip()
+            if name.lower() not in ["the", "my", "their", "our", "his", "her", "bank", "account", "statement"]:
+                return name
+                
+        return None
+
     @classmethod
     def extract_updates(cls, text: str) -> Dict[str, Any]:
         """Detects explicit modifications like 'Actually make it 7000' or 'Actually send it to Rahul'."""

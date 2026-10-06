@@ -231,6 +231,50 @@ class DatabaseService:
         finally:
             conn.close()
 
+    def get_full_person_details(self, name_query: str) -> Optional[Dict[str, Any]]:
+        clean_q = name_query.strip().lower().rstrip(".").rstrip(",")
+        if not clean_q: return None
+        conn = self.get_connection()
+        try:
+            row_c = conn.execute("""
+                SELECT c.*, a.bank_name, a.account_number, a.bank_address, a.balance, a.currency
+                FROM customers c
+                LEFT JOIN accounts a ON a.owner_id = c.customer_id
+                WHERE LOWER(c.customer_name) = ? OR LOWER(c.customer_id) = ?
+            """, (clean_q, clean_q)).fetchall()
+            
+            if row_c:
+                res = dict(row_c[0])
+                res["accounts"] = [dict(r) for r in row_c if r["bank_name"]]
+                return res
+                
+            row_r = conn.execute("""
+                SELECT r.*, a.bank_name, a.account_number, a.bank_address, a.balance, a.currency
+                FROM recipients r
+                LEFT JOIN accounts a ON a.owner_id = r.recipient_id
+                WHERE LOWER(r.recipient_name) = ? OR LOWER(r.recipient_id) = ?
+            """, (clean_q, clean_q)).fetchall()
+            
+            if row_r:
+                res = dict(row_r[0])
+                res["accounts"] = [dict(r) for r in row_r if r["bank_name"]]
+                return res
+            return None
+        finally:
+            conn.close()
+
+    def get_recent_transactions(self, owner_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+        conn = self.get_connection()
+        try:
+            rows = conn.execute("""
+                SELECT * FROM transactions 
+                WHERE sender_id = ? OR recipient_id = ?
+                ORDER BY timestamp ASC
+            """, (owner_id, owner_id)).fetchall()
+            return [dict(r) for r in rows][-limit:]
+        finally:
+            conn.close()
+
     def find_customer(self, query: str) -> Optional[Dict[str, Any]]:
         if not query or not query.strip():
             return None

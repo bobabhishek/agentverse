@@ -55,6 +55,7 @@ export interface ChatApiResponse {
     completed_conversations: string[];
   };
   audit_trail?: Record<string, any>;
+  bank_statement?: Record<string, any>;
 }
 
 export async function checkBackendHealth(): Promise<boolean> {

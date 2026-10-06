@@ -77,13 +77,14 @@ class ChatResponse(BaseModel):
     next_action: Optional[str] = None
     transaction_state: Optional[Dict[str, Any]] = None
     agent: Dict[str, Any] = Field(default_factory=dict)
-    policy: Dict[str, Any] = Field(default_factory=dict)
-    decision: Dict[str, Any] = Field(default_factory=dict)
-    transaction: Dict[str, Any] = Field(default_factory=dict)
-    transfer: Dict[str, Any] = Field(default_factory=dict)
+    policy: Optional[Dict[str, Any]] = None
+    decision: Optional[Dict[str, Any]] = None
+    transaction: Optional[Dict[str, Any]] = None
+    transfer: Optional[Dict[str, Any]] = None
     events: List[Dict[str, Any]] = Field(default_factory=list)
     account_balances: Optional[Dict[str, Any]] = None
     audit_trail: Optional[Dict[str, Any]] = None
+    bank_statement: Optional[Dict[str, Any]] = None
 
 class SimulationRunRequest(BaseModel):
     person_id: str

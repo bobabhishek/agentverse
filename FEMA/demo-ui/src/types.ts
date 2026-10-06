@@ -63,6 +63,7 @@ export interface ChatMessage {
     person_id: string;
     details?: Record<string, any>;
   }[];
+  bank_statement?: Record<string, any>;
 }
 
 export interface AccountBalances {
