@@ -266,12 +266,14 @@ export const ChatConsole: React.FC<ChatConsoleProps> = ({
                     {msg.bank_statement && msg.bank_statement.accounts && msg.bank_statement.accounts.length > 0 && (
                       <div className="mt-4 p-5 rounded-2xl bg-black/60 backdrop-blur-md border border-white/[0.08] shadow-sm font-sans text-slate-200">
                         <div className="flex items-center justify-between mb-4 border-b border-white/[0.08] pb-3">
-                          <h3 className="text-sm font-bold tracking-wider text-white">BANK STATEMENT</h3>
+                          <h3 className="text-sm font-bold tracking-wider text-white">
+                            {msg.bank_statement.is_statement !== false ? "BANK STATEMENT" : "BANKING DETAILS"}
+                          </h3>
                           <span className="px-2 py-0.5 rounded bg-blue-950/80 border border-blue-800/60 text-blue-300 font-mono text-[10px] uppercase">Official Record</span>
                         </div>
 
                         {/* Account Info & Summary */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 text-[11px]">
+                        <div className={`grid grid-cols-1 gap-6 mb-6 text-[11px] ${msg.bank_statement.is_statement !== false ? 'sm:grid-cols-2' : ''}`}>
                           <div className="space-y-1.5">
                             <h4 className="text-slate-400 font-semibold mb-2 uppercase tracking-wide">Account Information</h4>
                             <div className="flex justify-between"><span className="text-slate-500">Account Holder:</span> <span className="font-medium">{msg.bank_statement.customer_name || msg.bank_statement.recipient_name}</span></div>
@@ -280,110 +282,117 @@ export const ChatConsole: React.FC<ChatConsoleProps> = ({
                             <div className="flex justify-between"><span className="text-slate-500">Account Type:</span> <span className="font-medium">Savings Account</span></div>
                             <div className="flex justify-between"><span className="text-slate-500">Currency:</span> <span className="font-medium font-mono">{msg.bank_statement.accounts[0].currency}</span></div>
                           </div>
-                          <div className="space-y-1.5">
-                            <h4 className="text-slate-400 font-semibold mb-2 uppercase tracking-wide">Statement Summary</h4>
-                            <div className="flex justify-between"><span className="text-slate-500">Statement Date:</span> <span className="font-medium">{new Date().toISOString().split('T')[0]}</span></div>
-                            <div className="flex justify-between"><span className="text-slate-500">Closing Balance:</span> <span className="font-bold text-white font-mono">{Number(msg.bank_statement.accounts[0].balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {msg.bank_statement.accounts[0].currency}</span></div>
-                          </div>
-                        </div>
-
-                        {/* Transactions Table */}
-                        <h4 className="text-slate-400 font-semibold mb-2 uppercase tracking-wide text-[11px]">Transaction History</h4>
-                        <div className="w-full overflow-x-auto rounded-lg border border-white/[0.08] mb-4">
-                          <table className="w-full text-left text-[10px] sm:text-[11px] whitespace-nowrap">
-                            <thead className="bg-black/40 text-slate-400 border-b border-white/[0.08]">
-                              <tr>
-                                <th className="px-3 py-2 font-medium">Date</th>
-                                <th className="px-3 py-2 font-medium">Transaction ID</th>
-                                <th className="px-3 py-2 font-medium w-full">Description</th>
-                                <th className="px-3 py-2 font-medium text-right text-red-400">Debit</th>
-                                <th className="px-3 py-2 font-medium text-right text-emerald-400">Credit</th>
-                                <th className="px-3 py-2 font-medium text-right">Balance</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/[0.04]">
-                              {(() => {
-                                const owner_id = msg.bank_statement.customer_id || msg.bank_statement.recipient_id;
-                                const txs = msg.bank_statement.transactions || [];
-                                let runningBal = Number(msg.bank_statement.accounts[0].balance);
-                                
-                                const rows = txs.map(t => {
-                                  const isSender = t.sender_id === owner_id;
-                                  const rowBal = runningBal;
-                                  
-                                  let debit = '';
-                                  let credit = '';
-                                  let desc = '';
-                                  
-                                  if (isSender) {
-                                    const amt = Number(t.total_debit || t.amount_sent || 0);
-                                    debit = amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                    runningBal += amt;
-                                    desc = `Transfer to ${t.recipient_id}`;
-                                  } else {
-                                    const amt = Number(t.recipient_amount || t.amount_sent || 0);
-                                    credit = amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                    runningBal -= amt;
-                                    desc = `Transfer from ${t.sender_id}`;
-                                  }
-                                  
-                                  if (t.purpose && t.purpose !== 'None') {
-                                    desc += ` - ${t.purpose}`;
-                                  }
-                                  
-                                  return {
-                                    date: (t.timestamp || '').substring(0, 10),
-                                    id: t.transaction_id,
-                                    desc: desc.length > 40 ? desc.substring(0, 37) + '...' : desc,
-                                    debit,
-                                    credit,
-                                    balance: rowBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                                  };
-                                });
-                                
-                                if (rows.length === 0) {
-                                  return (
-                                    <tr>
-                                      <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
-                                        No transactions available for this account.
-                                      </td>
-                                    </tr>
-                                  );
-                                }
-                                
-                                return rows.reverse().map((r, i) => (
-                                  <tr key={i} className="hover:bg-white/[0.02] transition-colors font-mono">
-                                    <td className="px-3 py-2 text-slate-400">{r.date}</td>
-                                    <td className="px-3 py-2 text-slate-500">{r.id}</td>
-                                    <td className="px-3 py-2 truncate max-w-[150px] font-sans" title={r.desc}>{r.desc}</td>
-                                    <td className="px-3 py-2 text-right text-red-300">{r.debit}</td>
-                                    <td className="px-3 py-2 text-right text-emerald-300">{r.credit}</td>
-                                    <td className="px-3 py-2 text-right font-medium text-slate-300">{r.balance}</td>
-                                  </tr>
-                                ));
-                              })()}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        {/* Download PDF Action */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-3 border-t border-white/[0.08]">
-                          <span className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wider text-center sm:text-left">
-                            Simulation Only • Synthetic Data • No Real Funds
-                          </span>
                           
-                          <a 
-                            href={`http://localhost:8000/api/banking/${msg.bank_statement.customer_id || msg.bank_statement.recipient_id}/statement/pdf`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-semibold tracking-wide flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            Download PDF
-                          </a>
+                          {msg.bank_statement.is_statement !== false && (
+                            <div className="space-y-1.5">
+                              <h4 className="text-slate-400 font-semibold mb-2 uppercase tracking-wide">Statement Summary</h4>
+                              <div className="flex justify-between"><span className="text-slate-500">Statement Date:</span> <span className="font-medium">{new Date().toISOString().split('T')[0]}</span></div>
+                              <div className="flex justify-between"><span className="text-slate-500">Closing Balance:</span> <span className="font-bold text-white font-mono">{Number(msg.bank_statement.accounts[0].balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {msg.bank_statement.accounts[0].currency}</span></div>
+                            </div>
+                          )}
                         </div>
+
+                        {/* Transactions Table & PDF */}
+                        {msg.bank_statement.is_statement !== false && (
+                          <>
+                            <h4 className="text-slate-400 font-semibold mb-2 uppercase tracking-wide text-[11px]">Transaction History</h4>
+                            <div className="w-full overflow-x-auto rounded-lg border border-white/[0.08] mb-4">
+                              <table className="w-full text-left text-[10px] sm:text-[11px] whitespace-nowrap">
+                                <thead className="bg-black/40 text-slate-400 border-b border-white/[0.08]">
+                                  <tr>
+                                    <th className="px-3 py-2 font-medium">Date</th>
+                                    <th className="px-3 py-2 font-medium">Transaction ID</th>
+                                    <th className="px-3 py-2 font-medium w-full">Description</th>
+                                    <th className="px-3 py-2 font-medium text-right text-red-400">Debit</th>
+                                    <th className="px-3 py-2 font-medium text-right text-emerald-400">Credit</th>
+                                    <th className="px-3 py-2 font-medium text-right">Balance</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/[0.04]">
+                                  {(() => {
+                                    const owner_id = msg.bank_statement.customer_id || msg.bank_statement.recipient_id;
+                                    const txs = msg.bank_statement.transactions || [];
+                                    let runningBal = Number(msg.bank_statement.accounts[0].balance);
+                                    
+                                    const rows = txs.map(t => {
+                                      const isSender = t.sender_id === owner_id;
+                                      const rowBal = runningBal;
+                                      
+                                      let debit = '';
+                                      let credit = '';
+                                      let desc = '';
+                                      
+                                      if (isSender) {
+                                        const amt = Number(t.total_debit || t.amount_sent || 0);
+                                        debit = amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                        runningBal += amt;
+                                        desc = `Transfer to ${t.recipient_id}`;
+                                      } else {
+                                        const amt = Number(t.recipient_amount || t.amount_sent || 0);
+                                        credit = amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                        runningBal -= amt;
+                                        desc = `Transfer from ${t.sender_id}`;
+                                      }
+                                      
+                                      if (t.purpose && t.purpose !== 'None') {
+                                        desc += ` - ${t.purpose}`;
+                                      }
+                                      
+                                      return {
+                                        date: (t.timestamp || '').substring(0, 10),
+                                        id: t.transaction_id,
+                                        desc: desc.length > 40 ? desc.substring(0, 37) + '...' : desc,
+                                        debit,
+                                        credit,
+                                        balance: rowBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                      };
+                                    });
+                                    
+                                    if (rows.length === 0) {
+                                      return (
+                                        <tr>
+                                          <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
+                                            No transactions available for this account.
+                                          </td>
+                                        </tr>
+                                      );
+                                    }
+                                    
+                                    return rows.reverse().map((r, i) => (
+                                      <tr key={i} className="hover:bg-white/[0.02] transition-colors font-mono">
+                                        <td className="px-3 py-2 text-slate-400">{r.date}</td>
+                                        <td className="px-3 py-2 text-slate-500">{r.id}</td>
+                                        <td className="px-3 py-2 truncate max-w-[150px] font-sans" title={r.desc}>{r.desc}</td>
+                                        <td className="px-3 py-2 text-right text-red-300">{r.debit}</td>
+                                        <td className="px-3 py-2 text-right text-emerald-300">{r.credit}</td>
+                                        <td className="px-3 py-2 text-right font-medium text-slate-300">{r.balance}</td>
+                                      </tr>
+                                    ));
+                                  })()}
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {/* Download PDF Action */}
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-3 border-t border-white/[0.08]">
+                              <span className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wider text-center sm:text-left">
+                                Simulation Only • Synthetic Data • No Real Funds
+                              </span>
+                              
+                              <a 
+                                href={`http://localhost:8000/api/banking/${msg.bank_statement.customer_id || msg.bank_statement.recipient_id}/statement/pdf`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-semibold tracking-wide flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Download PDF
+                              </a>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                     {msg.transfer && (

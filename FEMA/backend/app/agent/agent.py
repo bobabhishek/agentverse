@@ -1486,8 +1486,11 @@ class FemaPaymentAgent:
                 logger.warning(f"Error handling sensitive request: {e}")
                 reply = "I encountered an error retrieving the requested information."
 
+        is_details = "details" in user_message.lower() or "bank name" in user_message.lower() or "account number" in user_message.lower() or "address" in user_message.lower() or "which bank" in user_message.lower() or "what bank" in user_message.lower()
+
         bank_statement_payload = None
-        if db_record:
+        if db_record and (is_statement or is_details):
+            db_record["is_statement"] = is_statement
             bank_statement_payload = db_record
 
         return {

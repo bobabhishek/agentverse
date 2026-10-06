@@ -164,22 +164,22 @@ class IntentExtractor:
 
     def is_sensitive_info_request(self, text: str) -> bool:
         clean = text.lower()
-        if re.search(r'bank\s*st[ae]+te?ment|st[ae]+te?ment|bankstaement|statment|account', clean):
+        if re.search(r'bank\s*st[ae]+te?ment|st[ae]+te?ment|bankstaement|statment|account|(which|what)\s+bank', clean):
             return True
-        keywords = ["bank name", "bank details", "account number", "account information", "bank address", "bank statement", "history", "transactions", "address", "how much money", "who has", "who sent", "account status", "download"]
+        keywords = ["bank name", "bank details", "ban details", "account number", "account information", "bank address", "bank statement", "history", "transactions", "address", "how much money", "who has", "who sent", "account status", "download"]
         return any(kw in clean for kw in keywords)
 
     def extract_person_from_sensitive_query(self, text: str) -> Optional[str]:
-        match = re.search(r'(?:what is|what bank does|show me|can you give me|how much money does|how much does|what\'s|give me everything you know about|download)\s+([A-Za-z\s]+?)(?:\'s)?\s+(?:bank|account|statement|address|use|have)', text, re.IGNORECASE)
+        match = re.search(r'(?:what is|what bank does|which bank does|show me|can you give me|how much money does|how much does|what\'s|give me everything you know about|download|give bank details of|give ban details of)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)(?:\'s)?\b', text, re.IGNORECASE)
         if match:
             name = match.group(1).strip()
             if name.lower() not in ["the", "my", "their", "our", "his", "her"]:
                 return name
                 
-        match2 = re.search(r'(?:of|for)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)', text, re.IGNORECASE)
+        match2 = re.search(r'(?:of|for|does)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)\b', text, re.IGNORECASE)
         if match2:
             name = match2.group(1).strip()
-            if name.lower() not in ["the", "my", "their", "our", "his", "her", "bank", "account", "statement"]:
+            if name.lower() not in ["the", "my", "their", "our", "his", "her", "bank", "account", "statement", "use", "has", "had", "have"]:
                 return name
                 
         return None
