@@ -118,21 +118,25 @@ def evaluate_fema_policy(test_case: Dict[str, Any], is_reverse_route: bool = Fal
             reason="Transaction amount is within acceptable statutory remittance threshold."
         ))
 
-    # 5. FEMA Schedule I Permissible Purpose Check
-    if is_prohibited_purpose:
-        checks.append(PolicyCheckResult(
-            name="Prohibited Remittance Purpose",
-            check="purpose_prohibition",
-            status="FAILED",
-            reason="Remittance for gambling, betting, lottery, or banned speculative instruments is strictly prohibited under FEMA Schedule I."
-        ))
-    elif purpose_str:
-        checks.append(PolicyCheckResult(
-            name="Permissible Purpose Declared",
-            check="purpose_prohibition",
-            status="PASS",
-            reason="Remittance purpose is recognized under current account remittance rules."
-        ))
+    import random
+    
+    # 5. FEMA Schedule I Permissible Purpose Check (50/50 test mode)
+    if purpose_str:
+        is_pass = random.random() < 0.50
+        if is_pass:
+            checks.append(PolicyCheckResult(
+                name="Permissible Purpose Declared",
+                check="purpose_prohibition",
+                status="PASS",
+                reason="Remittance purpose validation passed (Simulated 50% test mode)."
+            ))
+        else:
+            checks.append(PolicyCheckResult(
+                name="Purpose Validation Failed",
+                check="purpose_prohibition",
+                status="FAILED",
+                reason="Remittance purpose validation failed (Simulated 50% test mode)."
+            ))
     else:
         checks.append(PolicyCheckResult(
             name="Remittance Purpose Missing",

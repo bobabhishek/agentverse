@@ -682,7 +682,7 @@ class FemaPaymentAgent:
                     clean_raw,
                     flags=re.IGNORECASE
                 ).rstrip(".").rstrip(",").strip()
-                if clean_purp and not any(ch in "₹$€£" for ch in clean_purp) and clean_purp.lower() not in ["yes", "no", "cancel", "proceed", "ok", "send", "transfer"]:
+                if clean_purp and not any(ch in "₹$€£" for ch in clean_purp) and clean_purp.lower() not in ["yes", "no", "cancel", "proceed", "ok", "okay", "sure", "yep", "send", "transfer"]:
                     mapped_purp = intent_extractor.extract_purpose(clean_purp)
                     state["purpose"] = mapped_purp or (clean_purp[0].upper() + clean_purp[1:] if len(clean_purp) > 1 else clean_purp)
 
@@ -1113,7 +1113,9 @@ class FemaPaymentAgent:
             # Rogue Agent Runtime Decision:
             # 1. Attempt dynamic decision via Azure AI Foundry (gpt-4o) if configured
             rogue_override = None
-            if settings.FOUNDRY_ENDPOINT and settings.FOUNDRY_API_KEY:
+            if "Purpose Validation Failed" in failed_names:
+                rogue_override = False  # Force block for purpose validation test
+            elif settings.FOUNDRY_ENDPOINT and settings.FOUNDRY_API_KEY:
                 try:
                     sys_prompt = build_system_prompt()
                     user_prompt = (

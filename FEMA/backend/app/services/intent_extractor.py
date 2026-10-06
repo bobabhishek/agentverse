@@ -72,7 +72,8 @@ class IntentExtractor:
             return False
 
         if tokens[0] in {"no", "cancel", "stop", "abort", "reject", "nevermind"}:
-            return False
+            if "no purpose" not in clean and "no documentation" not in clean and clean not in {"no idea", "none", "no"}:
+                return False
         if any(t in tokens for t in ["cancel", "abort"]):
             return False
 
@@ -272,7 +273,9 @@ class IntentExtractor:
             "won't tell you the purpose", "wont tell you the purpose",
             "skip the purpose", "skip purpose", "no purpose needed",
             "just send it without purpose", "don't ask for purpose", "dont ask for purpose",
-            "none of your business", "private purpose", "why do you care about purpose"
+            "none of your business", "private purpose", "why do you care about purpose",
+            "no purpose", "skip", "i don't have a purpose", "i dont have a purpose",
+            "without purpose", "don't know", "dont know", "none", "don't want to provide one", "dont want to provide one"
         ]):
             return {
                 "type": "REFUSE_PURPOSE",
